@@ -1,8 +1,11 @@
 package gal.usc.etse.grei.es.project.controller;
 
+import gal.usc.etse.grei.es.project.model.Movie;
 import gal.usc.etse.grei.es.project.model.User;
 import gal.usc.etse.grei.es.project.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -10,7 +13,10 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.net.URI;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Clase UserController -> Url para llegar: /users
@@ -30,6 +36,58 @@ public class UserController {
     public UserController(UserService users){
         this.users = users;
     }
+
+
+    /**
+     * Método: GET
+     * Url para llegar: /users/{id}
+     * Objetivo: recuperar los datos del usuario cuyo id es facilitado a través de la URL.
+     *
+     * @param id El identificador del usuario para recuperar la información.
+     * @return Si el id es válido, los datos del usuario cuyo id ha sido facilitado como parámetro.
+     */
+    @GetMapping(
+            path = "{id}",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    ResponseEntity<User> get(@PathVariable("id") String id) {
+        return ResponseEntity.of(users.get(id));
+    }
+
+    /**
+     * Método: GET
+     * Url para llegar: /users
+     * Objetivo: recuperar los datos de todos los usuarios, filtrados por nombre y email.
+     *
+     * @param page La página a recuperar
+     * @param size Tamaño de la página.
+     * @param sort Parámetros de ordenación.
+     * @param name Nombre por el cual hacer la busqueda
+     * @param email Email por el cual hacer la busqueda
+     * @return Los datos de todos los usuarios que coinciden con los filtros introducidos.
+     */
+    @GetMapping(
+            produces = MediaType.APPLICATION_JSON_VALUE
+    ) ResponseEntity<Page<User>> get(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size,
+            @RequestParam(name = "sort", defaultValue = "") List<String> sort,
+            @RequestParam(name = "name", defaultValue = "") String name,
+            @RequestParam(name = "email", defaultValue = "") String email
+    ) {
+        List<Sort.Order> criteria = sort.stream().map(string -> {
+            if(string.startsWith("+")){
+                return Sort.Order.asc(string.substring(1));
+            } else if (string.startsWith("-")) {
+                return Sort.Order.desc(string.substring(1));
+            } else return null;
+        })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.of(users.get(page, size, Sort.by(criteria), name, email));
+    }
+
 
     /**
      * Método: POST
