@@ -11,7 +11,6 @@ public interface UserRepository extends MongoRepository<User,String> {
     @Query(value = "{$and :["
             + "?#{ [0] == null ? { $where : 'true'} : { 'name' : [0] } },"
             + "?#{ [1] == null ? { $where : 'true'} : { '_id' : [1] } },"
-            + "]}",
-            fields="{name : 1, country : 1, birthday : 1, picture : 1}")
+            + "]}", fields="{_id: 0, friends: 0}")
     Page<User> findAllByNameAndId(String name, String id, Pageable pageable);
 }

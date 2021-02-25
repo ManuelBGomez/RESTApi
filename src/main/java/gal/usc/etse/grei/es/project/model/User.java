@@ -5,6 +5,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -19,7 +20,7 @@ public class User {
     private String name;
     private String country;
     private String picture;
-    @NotEmpty
+    @NotNull
     private Date birthday;
     private List<User> friends;
 

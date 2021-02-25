@@ -72,8 +72,8 @@ public class UserController {
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size,
             @RequestParam(name = "sort", defaultValue = "") List<String> sort,
-            @RequestParam(name = "name", defaultValue = "") String name,
-            @RequestParam(name = "email", defaultValue = "") String email
+            @RequestParam(name = "name", required = false) String name,
+            @RequestParam(name = "email", required = false) String email
     ) {
         List<Sort.Order> criteria = sort.stream().map(string -> {
             if(string.startsWith("+")){
@@ -177,7 +177,26 @@ public class UserController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<User> addFriend(@PathVariable("id") String id, @RequestBody User newFriend){
-        return ResponseEntity.noContent().build();
+
+        Optional<User> result = users.addFriend(id, newFriend);
+
+        if(result.isPresent()){
+            return ResponseEntity.ok(result.get());
+        } else return ResponseEntity.notFound().build();
+    }
+
+    @DeleteMapping(
+            path = "{id}/friends/{idFriend}",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    ResponseEntity<User> deleteFriend(@PathVariable("id") String id,
+                                      @PathVariable("idFriend") String idFriend){
+
+        Optional<User> result = users.deleteFriend(id, idFriend);
+
+        if(result.isPresent()){
+            return ResponseEntity.ok(result.get());
+        } else return ResponseEntity.notFound().build();
     }
 
 }
