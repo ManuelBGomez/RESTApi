@@ -1,6 +1,5 @@
 package gal.usc.etse.grei.es.project.controller;
 
-import gal.usc.etse.grei.es.project.model.Movie;
 import gal.usc.etse.grei.es.project.model.User;
 import gal.usc.etse.grei.es.project.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -185,6 +184,15 @@ public class UserController {
         } else return ResponseEntity.notFound().build();
     }
 
+    /**
+     * Método: DELETE
+     * Url para llegar: /users/{id}/friends/{idFriend}
+     * Objetivo: borrar el amigo que se facilita por url, del usuario cuyo id también se facilita por url.
+     *
+     * @param id El identificador del usuario del cual se quiere eliminar un amigo.
+     * @param idFriend El identificador del amigo que se quiere eliminar.
+     * @return Los datos del usuario tras la eliminación si se pudo hacer, o un estado de error.
+     */
     @DeleteMapping(
             path = "{id}/friends/{idFriend}",
             produces = MediaType.APPLICATION_JSON_VALUE

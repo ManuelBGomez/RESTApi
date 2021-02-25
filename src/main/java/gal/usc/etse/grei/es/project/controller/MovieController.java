@@ -1,5 +1,6 @@
 package gal.usc.etse.grei.es.project.controller;
 
+import gal.usc.etse.grei.es.project.model.Assessment;
 import gal.usc.etse.grei.es.project.model.Movie;
 import gal.usc.etse.grei.es.project.service.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +10,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.print.attribute.standard.Media;
 import javax.validation.Valid;
+import javax.xml.stream.events.Comment;
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;
@@ -148,4 +151,38 @@ public class MovieController {
         }
     }
 
+    @PostMapping(
+            path = "{id}/comments",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    ResponseEntity<Assessment> addComment(@PathVariable("id") String id,
+                                          @RequestBody Assessment assessment){
+        Optional<Assessment> comment = movies.addComment(id, assessment);
+
+        return comment.isPresent() ? ResponseEntity.created(URI.create("http://localhost:8080/movies/" +
+                assessment.getMovie().getId() + "/comments")).body(comment.get()) : ResponseEntity.notFound().build();
+    }
+
+    @GetMapping(
+            path = "{id}/comments",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    ) ResponseEntity<Page<Assessment>> getComments(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size,
+            @RequestParam(name = "sort", defaultValue = "") List<String> sort,
+            @PathVariable("id") String id
+    ) {
+        List<Sort.Order> criteria = sort.stream().map(string -> {
+            if(string.startsWith("+")){
+                return Sort.Order.asc(string.substring(1));
+            } else if (string.startsWith("-")) {
+                return Sort.Order.desc(string.substring(1));
+            } else return null;
+        })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.of(movies.getComments(page, size, Sort.by(criteria), id));
+    }
 }
