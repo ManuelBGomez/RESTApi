@@ -8,4 +8,6 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 public interface CommentRepository extends MongoRepository<Assessment, String> {
 
     Page<Assessment> findAllByMovieId(String movieId, Pageable pageable);
+
+    Page<Assessment> findAllByUserEmail(String userId, Pageable pageable);
 }

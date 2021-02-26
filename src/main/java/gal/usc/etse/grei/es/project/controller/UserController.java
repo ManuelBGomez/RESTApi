@@ -1,5 +1,6 @@
 package gal.usc.etse.grei.es.project.controller;
 
+import gal.usc.etse.grei.es.project.model.Assessment;
 import gal.usc.etse.grei.es.project.model.User;
 import gal.usc.etse.grei.es.project.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -205,6 +206,30 @@ public class UserController {
         if(result.isPresent()){
             return ResponseEntity.ok(result.get());
         } else return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping(
+            path = "{id}/comments",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    ResponseEntity<Page<Assessment>> getUserComments(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size,
+            @RequestParam(name = "sort", defaultValue = "") List<String> sort,
+            @PathVariable("id") String userId
+    ) {
+
+        List<Sort.Order> criteria = sort.stream().map(string -> {
+            if(string.startsWith("+")){
+                return Sort.Order.asc(string.substring(1));
+            } else if (string.startsWith("-")) {
+                return Sort.Order.desc(string.substring(1));
+            } else return null;
+        })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.of(users.getUserComments(page, size, Sort.by(criteria), userId));
     }
 
 }

@@ -10,10 +10,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 
@@ -125,5 +123,27 @@ public class MovieService {
             System.out.println("Película no existe");
         }
         return Optional.empty();
+    }
+
+    public boolean deleteComment(String movieId, String commentId){
+        //Comprobamos existencia de la película, del comentario y su relación:
+        if(movies.existsById(movieId)){
+            Optional<Assessment> commentInfo = comments.findById(commentId);
+            if(commentInfo.isPresent()){
+                if(commentInfo.get().getMovie().getId().equals(movieId)){
+                    //Eliminamos el comentario:
+                    comments.deleteById(commentId);
+                    //Devolvemos un valor true para confirmar borrado:
+                    return true;
+                } else {
+                    System.out.println("Pelicula y comentario no relacionados");
+                }
+            } else {
+                System.out.println("Comentario no existe");
+            }
+        } else {
+            System.out.println("Película no existe");
+        }
+        return false;
     }
 }

@@ -1,6 +1,8 @@
 package gal.usc.etse.grei.es.project.service;
 
+import gal.usc.etse.grei.es.project.model.Assessment;
 import gal.usc.etse.grei.es.project.model.User;
+import gal.usc.etse.grei.es.project.repository.CommentRepository;
 import gal.usc.etse.grei.es.project.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -15,10 +17,12 @@ import java.util.Optional;
 @Service
 public class UserService {
     private final UserRepository users;
+    private final CommentRepository comments;
 
     @Autowired
-    public UserService(UserRepository users){
+    public UserService(UserRepository users, CommentRepository comments){
         this.users = users;
+        this.comments = comments;
     }
 
     public Optional<User> get(String id){
@@ -133,5 +137,17 @@ public class UserService {
             System.out.println("Id incorrecto");
         }
         return Optional.empty();
+    }
+
+    public Optional<Page<Assessment>> getUserComments(int page, int size, Sort sort, String userId){
+        Pageable request = PageRequest.of(page, size, sort);
+        //Ejecutamos la búsqueda:
+        Page<Assessment> result = comments.findAllByUserEmail(userId, request);
+        //Si no hay resultados se devuelve un elemento vacío:
+        if(result.isEmpty()){
+            return Optional.empty();
+        } else {
+            return Optional.of(result);
+        }
     }
 }

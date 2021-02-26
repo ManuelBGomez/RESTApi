@@ -10,9 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.print.attribute.standard.Media;
 import javax.validation.Valid;
-import javax.xml.stream.events.Comment;
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;
@@ -151,6 +149,15 @@ public class MovieController {
         }
     }
 
+    /**
+     * Método: POST
+     * Url para llegar: /movies/{id}/comments
+     * Objetivo: añadir un comentario para la película con el id indicado en la URL.
+     *
+     * @param id el id de la película sobre la cual se va a insertar un comentario.
+     * @param assessment los datos del comentario a añadir, incluyendo el usuario que lo hace.
+     * @return El comentario introducido en la base de datos.
+     */
     @PostMapping(
             path = "{id}/comments",
             produces = MediaType.APPLICATION_JSON_VALUE,
@@ -164,6 +171,18 @@ public class MovieController {
                 assessment.getMovie().getId() + "/comments/" + assessment.getId())).body(comment.get()) : ResponseEntity.notFound().build();
     }
 
+    /**
+     * Método: GET
+     * Url para llegar: /movies/{id}/comments
+     * Objetivo: obtener todos los comentarios asociados a una película.
+     *
+     * @param page la página a recuperar
+     * @param size el tamaño de cada página
+     * @param sort criterios de ordenación
+     * @param id identificador de la película
+     * @return La página pedida de la lista de comentarios de la película, en caso de que la información
+     *      facilitada sea correcta. Si no, un estado erróneo.
+     */
     @GetMapping(
             path = "{id}/comments",
             produces = MediaType.APPLICATION_JSON_VALUE
@@ -186,6 +205,17 @@ public class MovieController {
         return ResponseEntity.of(movies.getComments(page, size, Sort.by(criteria), id));
     }
 
+    /**
+     * Método: PUT
+     * Url para llegar: /movies/{id}/comments/{commentId}
+     * Objetivo: modificar el comentario cuyo id se indica en la URL, de la película cuyo id también
+     *      se indica por esa vía.
+     *
+     * @param movieId El identificador de la película de la que se quiere modificar un comentario.
+     * @param commentId El identificador del comentario que se quiere modificar.
+     * @param assessment El comentario a modificar.
+     * @return El comentario modificado, tal y como ha quedado almacenado.
+     */
     @PutMapping(
             path = "{id}/comments/{commentId}",
             produces = MediaType.APPLICATION_JSON_VALUE,
@@ -198,6 +228,20 @@ public class MovieController {
 
         if(result.isPresent()){
             return ResponseEntity.ok(result.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping(
+            path = "{id}/comments/{commentId}",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    ResponseEntity deleteComment(@PathVariable("id") String movieId,
+                                 @PathVariable("commentId") String commentId){
+
+        if(movies.deleteComment(movieId, commentId)){
+            return ResponseEntity.noContent().build();
         } else {
             return ResponseEntity.notFound().build();
         }
