@@ -1,15 +1,13 @@
 package gal.usc.etse.grei.es.project.service;
 
+import com.mongodb.BasicDBList;
 import gal.usc.etse.grei.es.project.model.Assessment;
 import gal.usc.etse.grei.es.project.model.Movie;
 import gal.usc.etse.grei.es.project.repository.CommentRepository;
 import gal.usc.etse.grei.es.project.repository.MovieRepository;
 import gal.usc.etse.grei.es.project.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,7 +29,20 @@ public class MovieService {
     public Optional<Page<Movie>> get(int page, int size, Sort sort, List<String> keywords, List<String> genres) {
         Pageable request = PageRequest.of(page, size, sort);
 
-        Page<Movie> result = movies.findAllByKeywordsAndGenres(keywords, genres, request);
+        ExampleMatcher matcher = ExampleMatcher.matchingAll()
+                .withIgnoreCase()
+                .withMatcher("keywords",
+                        matcher1 -> matcher1.transform(source ->
+                                Optional.of(((BasicDBList) source.get()).iterator().next())).ignoreCase())
+                .withMatcher("genres",
+                        matcher1 -> matcher1.transform(source ->
+                                Optional.of(((BasicDBList) source.get()).iterator().next())).ignoreCase());
+
+        Example<Movie> filter = Example.of(new Movie().setGenres(genres).setKeywords(keywords), matcher);
+
+        Page<Movie> result = movies.findAll(filter, request);
+
+        //Page<Movie> result = movies.findAllByKeywordsAndGenres(keywords, genres, request);
 
         if(result.isEmpty())
             return Optional.empty();

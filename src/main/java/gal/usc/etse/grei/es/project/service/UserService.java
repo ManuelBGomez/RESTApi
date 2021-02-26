@@ -6,7 +6,6 @@ import gal.usc.etse.grei.es.project.repository.CommentRepository;
 import gal.usc.etse.grei.es.project.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
-import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -39,10 +38,10 @@ public class UserService {
 
         Page<User> result  = users.findAll(filter, request);
 
-
         if(result.isEmpty())
             return Optional.empty();
 
+        //Eliminamos los campos que no nos interesan:
         result.forEach((it) -> {
             it.setEmail(null);
             it.setFriends(null);

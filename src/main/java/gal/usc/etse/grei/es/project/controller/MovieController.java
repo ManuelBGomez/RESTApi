@@ -54,8 +54,8 @@ public class MovieController {
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size,
             @RequestParam(name = "sort", defaultValue = "") List<String> sort,
-            @RequestParam(name = "keywords", defaultValue = "") List<String> keywords,
-            @RequestParam(name = "genres", defaultValue = "") List<String> genres
+            @RequestParam(name = "keywords", required = false) List<String> keywords,
+            @RequestParam(name = "genres", required = false) List<String> genres
     ) {
         List<Sort.Order> criteria = sort.stream().map(string -> {
             if(string.startsWith("+")){
