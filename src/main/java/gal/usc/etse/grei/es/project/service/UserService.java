@@ -5,10 +5,8 @@ import gal.usc.etse.grei.es.project.model.User;
 import gal.usc.etse.grei.es.project.repository.CommentRepository;
 import gal.usc.etse.grei.es.project.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -32,12 +30,25 @@ public class UserService {
     public Optional<Page<User>> get(int page, int size, Sort sort, String name, String email){
         Pageable request = PageRequest.of(page, size, sort);
 
-        Page<User> result = users.findAllByNameAndId(name, email, request);
+        ExampleMatcher matcher = ExampleMatcher.matching()
+                .withIgnoreCase()
+                .withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING);
+
+        //Establecemos criterios de filtrado:
+        Example<User> filter = Example.of(new User().setEmail(email).setName(name), matcher);
+
+        Page<User> result  = users.findAll(filter, request);
+
 
         if(result.isEmpty())
             return Optional.empty();
 
-        else return Optional.of(result);
+        result.forEach((it) -> {
+            it.setEmail(null);
+            it.setFriends(null);
+        });
+
+        return Optional.of(result);
     }
 
     public Optional<User> create(User user){
