@@ -161,7 +161,7 @@ public class MovieController {
         Optional<Assessment> comment = movies.addComment(id, assessment);
 
         return comment.isPresent() ? ResponseEntity.created(URI.create("http://localhost:8080/movies/" +
-                assessment.getMovie().getId() + "/comments")).body(comment.get()) : ResponseEntity.notFound().build();
+                assessment.getMovie().getId() + "/comments/" + assessment.getId())).body(comment.get()) : ResponseEntity.notFound().build();
     }
 
     @GetMapping(
@@ -184,5 +184,22 @@ public class MovieController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.of(movies.getComments(page, size, Sort.by(criteria), id));
+    }
+
+    @PutMapping(
+            path = "{id}/comments/{commentId}",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    ResponseEntity<Assessment> modifyComment(@PathVariable("id") String movieId,
+                                             @PathVariable("commentId") String commentId,
+                                             @RequestBody Assessment assessment){
+        Optional<Assessment> result = movies.modifyComment(movieId,commentId,assessment);
+
+        if(result.isPresent()){
+            return ResponseEntity.ok(result.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

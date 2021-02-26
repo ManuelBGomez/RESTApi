@@ -101,4 +101,29 @@ public class MovieService {
 
         return Optional.of(result);
     }
+
+    public Optional<Assessment> modifyComment(String movieId, String commentId, Assessment assessment){
+        //Comprobamos que la película existe:
+        if(movies.existsById(movieId)){
+            //Comprobamos que el assessment existe:
+            Optional<Assessment> originalComment = comments.findById(commentId);
+            if(originalComment.isPresent()){
+                //Comprobamos que el comentario sea de la película:
+                if(originalComment.get().getMovie().getId().equals(movieId)){
+                    Assessment newComment = originalComment.get();
+                    newComment.setRating(assessment.getRating());
+                    newComment.setComment(assessment.getComment());
+                    //Añadimos los cambios
+                    return Optional.of(comments.save(newComment));
+                } else {
+                    System.out.println("El comentario no es de la película pasada");
+                }
+            } else {
+                System.out.println("Comentario no existe");
+            }
+        } else {
+            System.out.println("Película no existe");
+        }
+        return Optional.empty();
+    }
 }
