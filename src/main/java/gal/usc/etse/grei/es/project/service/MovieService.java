@@ -2,7 +2,7 @@ package gal.usc.etse.grei.es.project.service;
 
 import com.mongodb.BasicDBList;
 import gal.usc.etse.grei.es.project.model.Assessment;
-import gal.usc.etse.grei.es.project.model.Movie;
+import gal.usc.etse.grei.es.project.model.Film;
 import gal.usc.etse.grei.es.project.repository.CommentRepository;
 import gal.usc.etse.grei.es.project.repository.MovieRepository;
 import gal.usc.etse.grei.es.project.repository.UserRepository;
@@ -26,7 +26,7 @@ public class MovieService {
         this.comments = comments;
     }
 
-    public Optional<Page<Movie>> get(int page, int size, Sort sort, List<String> keywords, List<String> genres) {
+    public Optional<Page<Film>> get(int page, int size, Sort sort, List<String> keywords, List<String> genres) {
         Pageable request = PageRequest.of(page, size, sort);
 
         ExampleMatcher matcher = ExampleMatcher.matchingAll()
@@ -38,27 +38,30 @@ public class MovieService {
                         matcher1 -> matcher1.transform(source ->
                                 Optional.of(((BasicDBList) source.get()).iterator().next())).ignoreCase());
 
-        Example<Movie> filter = Example.of(new Movie().setGenres(genres).setKeywords(keywords), matcher);
+        Example<Film> filter = Example.of(new Film().setGenres(genres).setKeywords(keywords), matcher);
 
-        Page<Movie> result = movies.findAll(filter, request);
-
-        //Page<Movie> result = movies.findAllByKeywordsAndGenres(keywords, genres, request);
+        Page<Film> result = movies.findAll(filter, request);
 
         if(result.isEmpty())
             return Optional.empty();
 
-        else return Optional.of(result);
+        result.forEach((it) -> {
+            it.setTagline(null).setCollection(null).setKeywords(null).setProducers(null).setCrew(null)
+                    .setCast(null).setBudget(null).setStatus(null).setRuntime(null).setRevenue(null);
+        });
+
+        return Optional.of(result);
     }
 
-    public Optional<Movie> get(String id) {
+    public Optional<Film> get(String id) {
         return movies.findById(id);
     }
 
-    public Optional<Movie> create(Movie movie){
+    public Optional<Film> create(Film movie){
         return Optional.of(movies.insert(movie));
     }
 
-    public Optional<Movie> update(String id, Movie movie){
+    public Optional<Film> update(String id, Film movie){
         if(movies.existsById(id)){
             movie.setId(id);
             return Optional.of(movies.save(movie));
@@ -78,14 +81,14 @@ public class MovieService {
 
     public Optional<Assessment> addComment(String id, Assessment assessment) {
         //Comprobamos que la película existe:
-        Optional<Movie> movie = movies.findById(id);
+        Optional<Film> movie = movies.findById(id);
         if(movie.isPresent()){
             //Comprobamos que hay una valoración:
             if(assessment.getRating() != null){
                 //Comprobamos si el usuario existe:
                 if(users.existsById(assessment.getUser().getEmail())){
                     //Añadimos el comentario:
-                    assessment.setMovie(new Movie().setId(movie.get().getId()).setTitle(movie.get().getTitle()));
+                    assessment.setMovie(new Film().setId(movie.get().getId()).setTitle(movie.get().getTitle()));
                     return Optional.of(comments.insert(assessment));
                 } else {
                     System.out.println("Usuario no existe");

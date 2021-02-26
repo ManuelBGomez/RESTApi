@@ -2,7 +2,7 @@ package gal.usc.etse.grei.es.project.controller;
 
 import gal.usc.etse.grei.es.project.Constants;
 import gal.usc.etse.grei.es.project.model.Assessment;
-import gal.usc.etse.grei.es.project.model.Movie;
+import gal.usc.etse.grei.es.project.model.Film;
 import gal.usc.etse.grei.es.project.service.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -50,7 +50,7 @@ public class MovieController {
      */
     @GetMapping(
             produces = MediaType.APPLICATION_JSON_VALUE
-    ) ResponseEntity<Page<Movie>> get(
+    ) ResponseEntity<Page<Film>> get(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size,
             @RequestParam(name = "sort", defaultValue = "") List<String> sort,
@@ -82,7 +82,7 @@ public class MovieController {
             path = "{id}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<Movie> get(@PathVariable("id") String id) {
+    ResponseEntity<Film> get(@PathVariable("id") String id) {
         return ResponseEntity.of(movies.get(id));
     }
 
@@ -98,8 +98,8 @@ public class MovieController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<Movie> create(@Valid @RequestBody Movie movie){
-        Optional<Movie> inserted = movies.create(movie);
+    ResponseEntity<Film> create(@Valid @RequestBody Film movie){
+        Optional<Film> inserted = movies.create(movie);
 
         return ResponseEntity.created(URI.create(Constants.URL + "/movies/" + inserted.get().getId()))
                 .body(inserted.get());
@@ -119,8 +119,8 @@ public class MovieController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<Movie> update(@PathVariable("id") String id, @Valid @RequestBody Movie movie){
-        Optional<Movie> updated = movies.update(id, movie);
+    ResponseEntity<Film> update(@PathVariable("id") String id, @Valid @RequestBody Film movie){
+        Optional<Film> updated = movies.update(id, movie);
 
         if(!updated.isPresent()){
             return ResponseEntity.notFound().build();
