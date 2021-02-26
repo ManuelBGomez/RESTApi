@@ -1,5 +1,6 @@
 package gal.usc.etse.grei.es.project.controller;
 
+import gal.usc.etse.grei.es.project.Constants;
 import gal.usc.etse.grei.es.project.model.Assessment;
 import gal.usc.etse.grei.es.project.model.Movie;
 import gal.usc.etse.grei.es.project.service.MovieService;
@@ -100,7 +101,7 @@ public class MovieController {
     ResponseEntity<Movie> create(@Valid @RequestBody Movie movie){
         Optional<Movie> inserted = movies.create(movie);
 
-        return ResponseEntity.created(URI.create("http://localhost:8080/movies/" + inserted.get().getId()))
+        return ResponseEntity.created(URI.create(Constants.URL + "/movies/" + inserted.get().getId()))
                 .body(inserted.get());
     }
 
@@ -167,7 +168,7 @@ public class MovieController {
                                           @RequestBody Assessment assessment){
         Optional<Assessment> comment = movies.addComment(id, assessment);
 
-        return comment.isPresent() ? ResponseEntity.created(URI.create("http://localhost:8080/movies/" +
+        return comment.isPresent() ? ResponseEntity.created(URI.create(Constants.URL + "/movies/" +
                 assessment.getMovie().getId() + "/comments/" + assessment.getId())).body(comment.get()) : ResponseEntity.notFound().build();
     }
 
@@ -233,6 +234,16 @@ public class MovieController {
         }
     }
 
+    /**
+     * Método: DELETE
+     * Url para llegar: /movies/{id}/comments/{commentId}
+     * Objetivo: borrar el comentario cuyo id se indica en la URL, de la película cuyo id se indica
+     *      por esa misma vía.
+     *
+     * @param movieId El id de la película de la que se quiere borrar un comentario.
+     * @param commentId El comentario a borrar
+     * @return Estado correcto si se borra correctamente, estado erróneo en otro caso.
+     */
     @DeleteMapping(
             path = "{id}/comments/{commentId}",
             produces = MediaType.APPLICATION_JSON_VALUE

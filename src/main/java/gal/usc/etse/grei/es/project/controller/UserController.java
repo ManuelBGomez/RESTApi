@@ -1,5 +1,6 @@
 package gal.usc.etse.grei.es.project.controller;
 
+import gal.usc.etse.grei.es.project.Constants;
 import gal.usc.etse.grei.es.project.model.Assessment;
 import gal.usc.etse.grei.es.project.model.User;
 import gal.usc.etse.grei.es.project.service.UserService;
@@ -107,7 +108,7 @@ public class UserController {
         if(!inserted.isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         } else {
-            return ResponseEntity.created(URI.create("http://localhost:8080/movies/" + inserted.get().getEmail()))
+            return ResponseEntity.created(URI.create(Constants.URL + "/users/" + inserted.get().getEmail()))
                     .body(inserted.get());
         }
     }
