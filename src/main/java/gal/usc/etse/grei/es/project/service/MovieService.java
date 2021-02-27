@@ -1,6 +1,8 @@
 package gal.usc.etse.grei.es.project.service;
 
 import com.mongodb.BasicDBList;
+import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoResultException;
 import gal.usc.etse.grei.es.project.model.*;
 import gal.usc.etse.grei.es.project.repository.CommentRepository;
 import gal.usc.etse.grei.es.project.repository.MovieRepository;
@@ -13,12 +15,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Clase MovieService: métodos relacionados con las películas.
+ *
+ * @author Manuel Bendaña
+ */
 @Service
 public class MovieService {
+    //Referencias a las interfaces repository que necesitamos en esta clase:
     private final MovieRepository movies;
     private final UserRepository users;
     private final CommentRepository comments;
 
+    /**
+     * Constructor de la clase
+     * @param movies Referencia al MovieRepository
+     * @param users Referencia al UserRepository
+     * @param comments Referencia al CommentRepository
+     */
     @Autowired
     public MovieService(MovieRepository movies, UserRepository users, CommentRepository comments) {
         this.movies = movies;
@@ -26,19 +40,42 @@ public class MovieService {
         this.comments = comments;
     }
 
+    /**
+     * Método que permite recuperar los datos de todas las películas.
+     *
+     * @param page Página a recuperar.
+     * @param size Tamaño de la página.
+     * @param sort Parámetros de ordenación.
+     * @param keywords Lista de palabras clave por las cuales se puede realizar la búsqueda.
+     * @param genres Lista de géneros por los cuales se puede realizar la búsqueda.
+     * @param cast Lista de los nombres de los miembros del cast por los que se puede realizar la búsqueda de películas.
+     * @param crew Lista de nombres de los miembros del crew por los que se puede realizar la búsqueda de películas.
+     * @param producers Lista de nombres de los productores por los que se puede realizar la búsqueda de películas.
+     * @param day Día de cualquier mes por el que se puede realizar la búsqueda de películas.
+     * @param month Mes del año por el que se puede realizar la búsqueda.
+     * @param year Año por el cual se puede realizar la búsqueda de películas.
+     * @return Lista de películas (formato optional) obtenidas por la búsqueda.
+     * @throws NoResultException excepción en caso de no encontrar resultados para la búsqueda.
+     */
     public Optional<Page<Film>> get(int page, int size, Sort sort, List<String> keywords,
                                     List<String> genres, List<String> cast, List<String> crew,
-                                    List<String> producers, Integer day, Integer month, Integer year) {
+                                    List<String> producers, Integer day, Integer month, Integer year) throws NoResultException {
+        //Creamos un objeto de Pageable para poder hacer la búsqueda por páginas:
         Pageable request = PageRequest.of(page, size, sort);
 
+        //Creamos las listas de productores, miembros de cast o miembros de la crew si existen:
         List<Producer> possibleProducers = producers != null ? new ArrayList<>() : null;
         List<Cast> possibleCast = cast != null ? new ArrayList<>() : null;
         List<Crew> possibleCrew = crew != null ? new ArrayList<>() : null;
 
+        //Si existen esas listas, además, creamos productores, miembros de cast/crew, y les asignamos nombre
+        //para hacer la búsqueda.
         if(producers != null) producers.forEach((member) -> possibleProducers.add(new Producer().setName(member)));
         if(cast != null) cast.forEach((member) -> possibleCast.add((Cast) new Cast().setName(member)));
         if(crew != null) crew.forEach((member) -> possibleCrew.add((Crew) new Crew().setName(member)));
 
+        //Creamos el ExampleMatcher para poder hacer las búsquedas por los distintos parámetros.
+        //Todas las keywords, géneros y personas se buscan por exactitud e ignorando mayúsculas:
         ExampleMatcher matcher = ExampleMatcher.matchingAll()
                 .withIgnoreCase()
                 .withMatcher("keywords",
@@ -57,14 +94,18 @@ public class MovieService {
                         matcher1 -> matcher1.transform(source ->
                                 Optional.of(((BasicDBList) source.get()).iterator().next())).exact().ignoreCase());
 
+        //Se crea el example con todos los parámetros por los que se va a hacer la búsqueda
+        //Si alguno de los posibles parámetros no se pasó, permanece a null (por lo que no se busca por él).
         Example<Film> filter = Example.of(new Film().setGenres(genres).setKeywords(keywords)
                 .setCast(possibleCast).setCrew(possibleCrew).setProducers(possibleProducers)
                 .setReleaseDate(new Date().setDay(day).setMonth(month).setYear(year)), matcher);
 
+        //Llamamos a findAll para hacer la búsqueda de películas:
         Page<Film> result = movies.findAll(filter, request);
 
+        //Si no se devuelve resultado, se lanzará excepción:
         if(result.isEmpty())
-            return Optional.empty();
+            throw new NoResultException(ErrorType.NO_RESULT, "No results returned for the specified query");
 
         result.forEach((it) -> {
             it.setTagline(null).setCollection(null).setKeywords(null).setProducers(null).setCrew(null)

@@ -1,12 +1,15 @@
 package gal.usc.etse.grei.es.project.controller;
 
-import gal.usc.etse.grei.es.project.Constants;
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoResultException;
+import gal.usc.etse.grei.es.project.utilities.AuxMethods;
+import gal.usc.etse.grei.es.project.utilities.Constants;
 import gal.usc.etse.grei.es.project.model.Assessment;
 import gal.usc.etse.grei.es.project.model.Film;
 import gal.usc.etse.grei.es.project.service.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,10 +24,13 @@ import java.util.stream.Collectors;
 /**
  * Clase MovieController -> Url para llegar: /movies
  * Gestión de peticiones relacionadas con las películas y sus datos.
+ *
+ * @author Manuel Bendaña
  */
 @RestController
 @RequestMapping("movies")
 public class MovieController {
+    //Referencia a la clase MovieService:
     private final MovieService movies;
 
     /**
@@ -46,11 +52,17 @@ public class MovieController {
      * @param sort Parámetros de ordenación.
      * @param keywords Palabras clave por las que se puede realizar la búsqueda de películas.
      * @param genres Géneros por los que se puede realizar la búsqueda de películas.
-     * @return Películas obtenidas a raíz de la búsqueda.
+     * @param cast Nombres de los miembros del cast por los que se puede realizar la búsqueda de peliculas.
+     * @param crew Nombres de los miembros de crew por los que se puede realizar la búsqueda de películas.
+     * @param producers Nombres de los productores por los que se puede realizar la búsqueda de películas.
+     * @param day Día de cualquier mes por el que se puede realizar la búsqueda.
+     * @param month Mes del año por el que se puede realizar la búsqueda.
+     * @param year Año por el cual se puede realizar la búsqueda.
+     * @return Películas obtenidas a raíz de la búsqueda. Si no hubiese ninguna, se devolverá un estado de error.
      */
     @GetMapping(
             produces = MediaType.APPLICATION_JSON_VALUE
-    ) ResponseEntity<Page<Film>> get(
+    ) ResponseEntity get(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size,
             @RequestParam(name = "sort", defaultValue = "") List<String> sort,
@@ -63,20 +75,17 @@ public class MovieController {
             @RequestParam(name = "releaseDate.month", required = false) Integer month,
             @RequestParam(name = "releaseDate.year", required = false) Integer year
     ) {
-        List<Sort.Order> criteria = sort.stream().map(string -> {
-            if(string.startsWith("+")){
-                return Sort.Order.asc(string.substring(1));
-            } else if (string.startsWith("-")) {
-                return Sort.Order.desc(string.substring(1));
-            } else return null;
-        })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        //Transformamos la lista de criterios pasada como argumento para que puedan ser procesados en la consulta:
+        List<Sort.Order> criteria = AuxMethods.getSortCriteria(sort);
 
-        System.out.println(producers);
-
-        return ResponseEntity.of(movies.get(page, size, Sort.by(criteria), keywords, genres,
-                cast, crew, producers, day, month, year));
+        try {
+            //Si la consulta devuelve resultados, se devolverán directamente:
+            return ResponseEntity.of(movies.get(page, size, Sort.by(criteria), keywords, genres,
+                    cast, crew, producers, day, month, year));
+        } catch (NoResultException e) {
+            //Si no, se enviará una respuesta personalizada:
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
+        }
     }
 
     /**

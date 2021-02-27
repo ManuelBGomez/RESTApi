@@ -1,4 +1,4 @@
-package gal.usc.etse.grei.es.project;
+package gal.usc.etse.grei.es.project.utilities;
 
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
