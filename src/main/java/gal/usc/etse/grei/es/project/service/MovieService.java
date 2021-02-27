@@ -1,8 +1,7 @@
 package gal.usc.etse.grei.es.project.service;
 
 import com.mongodb.BasicDBList;
-import gal.usc.etse.grei.es.project.model.Assessment;
-import gal.usc.etse.grei.es.project.model.Film;
+import gal.usc.etse.grei.es.project.model.*;
 import gal.usc.etse.grei.es.project.repository.CommentRepository;
 import gal.usc.etse.grei.es.project.repository.MovieRepository;
 import gal.usc.etse.grei.es.project.repository.UserRepository;
@@ -10,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,19 +26,40 @@ public class MovieService {
         this.comments = comments;
     }
 
-    public Optional<Page<Film>> get(int page, int size, Sort sort, List<String> keywords, List<String> genres) {
+    public Optional<Page<Film>> get(int page, int size, Sort sort, List<String> keywords,
+                                    List<String> genres, List<String> cast, List<String> crew,
+                                    List<String> producers, Integer day, Integer month, Integer year) {
         Pageable request = PageRequest.of(page, size, sort);
+
+        List<Producer> possibleProducers = producers != null ? new ArrayList<>() : null;
+        List<Cast> possibleCast = cast != null ? new ArrayList<>() : null;
+        List<Crew> possibleCrew = crew != null ? new ArrayList<>() : null;
+
+        if(producers != null) producers.forEach((member) -> possibleProducers.add(new Producer().setName(member)));
+        if(cast != null) cast.forEach((member) -> possibleCast.add((Cast) new Cast().setName(member)));
+        if(crew != null) crew.forEach((member) -> possibleCrew.add((Crew) new Crew().setName(member)));
 
         ExampleMatcher matcher = ExampleMatcher.matchingAll()
                 .withIgnoreCase()
                 .withMatcher("keywords",
                         matcher1 -> matcher1.transform(source ->
-                                Optional.of(((BasicDBList) source.get()).iterator().next())).ignoreCase())
+                                Optional.of(((BasicDBList) source.get()).iterator().next())).exact().ignoreCase())
                 .withMatcher("genres",
                         matcher1 -> matcher1.transform(source ->
-                                Optional.of(((BasicDBList) source.get()).iterator().next())).ignoreCase());
+                                Optional.of(((BasicDBList) source.get()).iterator().next())).exact().ignoreCase())
+                .withMatcher("crew",
+                        matcher1 -> matcher1.transform(source ->
+                                Optional.of(((BasicDBList) source.get()).iterator().next())).exact().ignoreCase())
+                .withMatcher("cast",
+                        matcher1 -> matcher1.transform(source ->
+                                Optional.of(((BasicDBList) source.get()).iterator().next())).exact().ignoreCase())
+                .withMatcher("producers",
+                        matcher1 -> matcher1.transform(source ->
+                                Optional.of(((BasicDBList) source.get()).iterator().next())).exact().ignoreCase());
 
-        Example<Film> filter = Example.of(new Film().setGenres(genres).setKeywords(keywords), matcher);
+        Example<Film> filter = Example.of(new Film().setGenres(genres).setKeywords(keywords)
+                .setCast(possibleCast).setCrew(possibleCrew).setProducers(possibleProducers)
+                .setReleaseDate(new Date().setDay(day).setMonth(month).setYear(year)), matcher);
 
         Page<Film> result = movies.findAll(filter, request);
 

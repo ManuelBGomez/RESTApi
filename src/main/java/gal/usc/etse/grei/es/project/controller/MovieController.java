@@ -55,7 +55,13 @@ public class MovieController {
             @RequestParam(name = "size", defaultValue = "20") int size,
             @RequestParam(name = "sort", defaultValue = "") List<String> sort,
             @RequestParam(name = "keywords", required = false) List<String> keywords,
-            @RequestParam(name = "genres", required = false) List<String> genres
+            @RequestParam(name = "genres", required = false) List<String> genres,
+            @RequestParam(name = "producers", required = false) List<String> producers,
+            @RequestParam(name = "cast", required = false) List<String> cast,
+            @RequestParam(name = "crew", required = false) List<String> crew,
+            @RequestParam(name = "releaseDate.day", required = false) Integer day,
+            @RequestParam(name = "releaseDate.month", required = false) Integer month,
+            @RequestParam(name = "releaseDate.year", required = false) Integer year
     ) {
         List<Sort.Order> criteria = sort.stream().map(string -> {
             if(string.startsWith("+")){
@@ -67,7 +73,10 @@ public class MovieController {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-        return ResponseEntity.of(movies.get(page, size, Sort.by(criteria), keywords, genres));
+        System.out.println(producers);
+
+        return ResponseEntity.of(movies.get(page, size, Sort.by(criteria), keywords, genres,
+                cast, crew, producers, day, month, year));
     }
 
     /**
