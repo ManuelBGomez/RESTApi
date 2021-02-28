@@ -108,15 +108,28 @@ public class MovieService {
             throw new NoResultException(ErrorType.NO_RESULT, "No results returned for the specified query");
 
         result.forEach((it) -> {
-            it.setTagline(null).setCollection(null).setKeywords(null).setProducers(null).setCrew(null)
+            it.setTagline(null).setCollection(null).setKeywords(null)/*.setProducers(null)*/.setCrew(null)
                     .setCast(null).setBudget(null).setStatus(null).setRuntime(null).setRevenue(null);
         });
 
         return Optional.of(result);
     }
 
-    public Optional<Film> get(String id) {
-        return movies.findById(id);
+
+    /**
+     * Método que permite recuperar los datos de la película con el id pasado como parámetro.
+     *
+     * @param id El id de la película a recuperar
+     * @return Los datos de la película con el id facilitado (si se encuentra).
+     * @throws NoResultException Excepción lanzada en caso de no encontrar resultados.
+     */
+    public Optional<Film> get(String id) throws NoResultException {
+        //Se recupera la película con el id pasado:
+        Optional<Film> mv = movies.findById(id);
+        //Devolvemos la película si se obtuvo resultado:
+        if(mv.isPresent()) return mv;
+        //Si no, se lanza la excepción con un mensaje personalizado:
+        else throw new NoResultException(ErrorType.NO_RESULT, "No movie found with the specified id");
     }
 
     public Optional<Film> create(Film movie){

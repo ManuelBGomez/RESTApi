@@ -2,24 +2,50 @@ package gal.usc.etse.grei.es.project.errorManagement;
 
 import java.util.Objects;
 
+/**
+ * Clase ErrorObject: se utiliza para encapsular la información de un error que se enviará en caso de no
+ * poder satisfacer una petición.
+ *
+ * @author Manuel Bendaña
+ */
 public class ErrorObject {
-    private ErrorType type;
+    //Tipo de error: clase Enum.
+    private ErrorType errorType;
+    //Descripción del error.
     private String description;
 
+    /**
+     * Constructor de la clase.
+     * @param type Tipo de error ocurrido.
+     * @param description Detalle del error ocurrido.
+     */
     public ErrorObject(ErrorType type, String description){
-        this.type = type;
+        this.errorType = type;
         this.description = description;
     }
 
-    public ErrorType getType() {
-        return type;
+    /**
+     * Getter del tipo de error
+     * @return El tipo de error almacenado.
+     */
+    public ErrorType getErrorType() {
+        return errorType;
     }
 
-    public ErrorObject setType(ErrorType type) {
-        this.type = type;
+    /**
+     * Setter del tipo de error
+     * @param errorType El tipo de error
+     * @return El objeto modificado.
+     */
+    public ErrorObject setErrorType(ErrorType errorType) {
+        this.errorType = errorType;
         return this;
     }
 
+    /**
+     * Getter de la desccripción del error.
+     * @return La descripción
+     */
     public String getDescription() {
         return description;
     }
@@ -32,7 +58,7 @@ public class ErrorObject {
     @Override
     public String toString() {
         return "ErrorObject{" +
-                "type=" + type +
+                "type=" + errorType +
                 ", description='" + description + '\'' +
                 '}';
     }
@@ -42,11 +68,11 @@ public class ErrorObject {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ErrorObject that = (ErrorObject) o;
-        return type == that.type && Objects.equals(description, that.description);
+        return errorType == that.errorType && Objects.equals(description, that.description);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, description);
+        return Objects.hash(errorType, description);
     }
 }

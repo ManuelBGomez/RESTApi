@@ -78,6 +78,8 @@ public class MovieController {
         //Transformamos la lista de criterios pasada como argumento para que puedan ser procesados en la consulta:
         List<Sort.Order> criteria = AuxMethods.getSortCriteria(sort);
 
+        System.out.println(producers);
+
         try {
             //Si la consulta devuelve resultados, se devolverán directamente:
             return ResponseEntity.of(movies.get(page, size, Sort.by(criteria), keywords, genres,
@@ -100,8 +102,14 @@ public class MovieController {
             path = "{id}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<Film> get(@PathVariable("id") String id) {
-        return ResponseEntity.of(movies.get(id));
+    ResponseEntity get(@PathVariable("id") String id) {
+        try {
+            //Tratamos de recuperar la película:
+            return ResponseEntity.of(movies.get(id));
+        } catch (NoResultException e) {
+            //Si no se consigue recuperar, capturamos la excepción lanzada y enviamos mensaje de error:
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
+        }
     }
 
     /**
