@@ -8,7 +8,7 @@ import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
  *
  * @author Manuel Bendaña
  */
-public class GeneralApiException extends Exception{
+public abstract class GeneralApiException extends Exception{
 
     //Objeto de error, que será el que se devuelve al usuario.
     private final ErrorObject errorObject;

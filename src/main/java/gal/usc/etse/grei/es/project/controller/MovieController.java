@@ -1,5 +1,6 @@
 package gal.usc.etse.grei.es.project.controller;
 
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoResultException;
 import gal.usc.etse.grei.es.project.utilities.AuxMethods;
 import gal.usc.etse.grei.es.project.utilities.Constants;
@@ -78,8 +79,6 @@ public class MovieController {
         //Transformamos la lista de criterios pasada como argumento para que puedan ser procesados en la consulta:
         List<Sort.Order> criteria = AuxMethods.getSortCriteria(sort);
 
-        System.out.println(producers);
-
         try {
             //Si la consulta devuelve resultados, se devolverán directamente:
             return ResponseEntity.of(movies.get(page, size, Sort.by(criteria), keywords, genres,
@@ -124,11 +123,18 @@ public class MovieController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<Film> create(@Valid @RequestBody Film movie){
-        Optional<Film> inserted = movies.create(movie);
+    ResponseEntity<Object> create(@Valid @RequestBody Film movie) {
+        try {
+            //Tratamos de crear la película:
+            Optional<Film> inserted = movies.create(movie);
+            //Si se crea correctamente, devolvemos la información de la película creada.
+            return ResponseEntity.created(URI.create(Constants.URL + "/movies/" + inserted.get().getId()))
+                    .body(inserted.get());
+        } catch (InvalidDataException e) {
+            //Si se captura la excepción de datos inválidos, se devuelve una bad request.
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
+        }
 
-        return ResponseEntity.created(URI.create(Constants.URL + "/movies/" + inserted.get().getId()))
-                .body(inserted.get());
     }
 
     /**
@@ -145,13 +151,15 @@ public class MovieController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<Film> update(@PathVariable("id") String id, @Valid @RequestBody Film movie){
-        Optional<Film> updated = movies.update(id, movie);
-
-        if(!updated.isPresent()){
-            return ResponseEntity.notFound().build();
-        } else {
+    ResponseEntity<Object> update(@PathVariable("id") String id, @Valid @RequestBody Film movie){
+        try {
+            Optional<Film> updated = movies.update(id, movie);
+            //Si se actualiza la película, se devuelve un estado OK:
+            //En el cuerpo del mensaje irán los datos de la película.
             return ResponseEntity.ok(updated.get());
+        } catch (InvalidDataException e) {
+            //Si se captura una excepción de datos incorrectos, se ofrece con un estado bad request:
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
         }
     }
 
@@ -168,11 +176,15 @@ public class MovieController {
             path = "{id}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity delete(@PathVariable("id") String id){
-        if(movies.delete(id)){
+    ResponseEntity<Object> delete(@PathVariable("id") String id){
+        try {
+            //Se trata de borrar la película con el id especificado:
+            movies.delete(id);
+            //Se devuelve un estado noContent, dado que no tenemos nada que mostrar:
             return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
+        } catch (InvalidDataException e) {
+            //En caso de no poderse ejecutar el borrado (lanzada excepción), se devuelve error:
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
         }
     }
 

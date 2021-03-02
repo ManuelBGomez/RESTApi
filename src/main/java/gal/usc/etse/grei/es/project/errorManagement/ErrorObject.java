@@ -50,19 +50,33 @@ public class ErrorObject {
         return description;
     }
 
+    /**
+     * Setter de la descripción del error.
+     * @param description la descripción a asociar.
+     * @return El objeto modificado.
+     */
     public ErrorObject setDescription(String description) {
         this.description = description;
         return this;
     }
 
+    /**
+     * Método toString
+     * @return el objeto de error convertido a string
+     */
     @Override
     public String toString() {
         return "ErrorObject{" +
-                "type=" + errorType +
+                "errorType=" + errorType +
                 ", description='" + description + '\'' +
                 '}';
     }
 
+    /**
+     * Método equals, comprueba que dos objetos sean iguales.
+     * @param o
+     * @return true si los objetos son iguales, false en otro caso.
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -71,6 +85,10 @@ public class ErrorObject {
         return errorType == that.errorType && Objects.equals(description, that.description);
     }
 
+    /**
+     * Método hashCode
+     * @return el hash del objeto.
+     */
     @Override
     public int hashCode() {
         return Objects.hash(errorType, description);

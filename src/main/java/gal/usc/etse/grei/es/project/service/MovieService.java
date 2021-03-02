@@ -2,6 +2,7 @@ package gal.usc.etse.grei.es.project.service;
 
 import com.mongodb.BasicDBList;
 import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoResultException;
 import gal.usc.etse.grei.es.project.model.*;
 import gal.usc.etse.grei.es.project.repository.CommentRepository;
@@ -132,25 +133,59 @@ public class MovieService {
         else throw new NoResultException(ErrorType.NO_RESULT, "No movie found with the specified id");
     }
 
-    public Optional<Film> create(Film movie){
-        return Optional.of(movies.insert(movie));
-    }
-
-    public Optional<Film> update(String id, Film movie){
-        if(movies.existsById(id)){
-            movie.setId(id);
-            return Optional.of(movies.save(movie));
+    /**
+     * Método que permite insertar una nueva película en la base de datos.
+     * @param movie Los datos de la película a insertar.
+     * @return Los datos de la película una vez insertados, incluyendo el id.
+     * @throws InvalidDataException Excepción lanzada en caso de que se facilite alguna información incorrecta.
+     */
+    public Optional<Film> create(Film movie) throws InvalidDataException {
+        //Comprobamos que la película haya llegado sin un id:
+        if(movie.getId() == null || movie.getId().isEmpty()){
+            //Si es así, se devuelve un optional con los datos de la película insertada.
+            return Optional.of(movies.insert(movie));
         } else {
-            return Optional.empty();
+            //Si no, se lanza una excepción:
+            throw new InvalidDataException(ErrorType.INVALID_INFO, "The id is automatically generated on insert.");
         }
     }
 
-    public boolean delete(String movieId){
-        if(movies.existsById(movieId)){
-            movies.deleteById(movieId);
-            return true;
+    /**
+     * Método que permite actualizar los datos de una película.
+     * @param id El identificador de la película en cuestión.
+     * @param movie Los datos de la película para actualizar
+     * @return La película una vez actualizada en la Base de Datos.
+     * @throws InvalidDataException Excepción lanzada en caso de que haya información incorrecta.
+     */
+    public Optional<Film> update(String id, Film movie) throws InvalidDataException {
+        //Comprobamos que el id de la película existe:
+        if(movies.existsById(id)){
+            //Verificamos que el id de la película pasada coincida con el de la URL:
+            if(movie.getId() != null && movie.getId().equals(id)){
+                return Optional.of(movies.save(movie));
+            } else {
+                //Si no coinciden los IDs, se lanza una excepción:
+                throw new InvalidDataException(ErrorType.INVALID_INFO, "URI movie ID and provided movie ID don't match");
+            }
         } else {
-            return false;
+            //Si no hay película con el id pasado, se lanza otra excepción:
+            throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "There is no film with the specified id");
+        }
+    }
+
+    /**
+     * Método que permite borrar la película con el id especificado.
+     * @param movieId El identificador de la película a borrar
+     * @throws InvalidDataException Excepción lanzada en caso de haber problemas en el borrado.
+     */
+    public void delete(String movieId) throws InvalidDataException {
+        //Se comprueba si existe la película que se quiere borrar:
+        if(movies.existsById(movieId)){
+            //Si existe, se borra la película:
+            movies.deleteById(movieId);
+        } else {
+            //Si no, se lanza una excepción indicando que no se ha encontrado película
+            throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "No film found with the specified ID.");
         }
     }
 

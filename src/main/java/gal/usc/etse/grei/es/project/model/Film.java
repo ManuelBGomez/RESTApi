@@ -14,7 +14,7 @@ import java.util.StringJoiner;
 public class Film {
     @Id
     private String id;
-    @NotEmpty
+    @NotEmpty(message = "You have to specify the title of the film.")
     private String title;
     private String overview;
     private String tagline;
