@@ -202,12 +202,18 @@ public class MovieController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<Assessment> addComment(@PathVariable("id") String id,
-                                          @RequestBody Assessment assessment){
-        Optional<Assessment> comment = movies.addComment(id, assessment);
-
-        return comment.isPresent() ? ResponseEntity.created(URI.create(Constants.URL + "/movies/" +
-                assessment.getMovie().getId() + "/comments/" + assessment.getId())).body(comment.get()) : ResponseEntity.notFound().build();
+    ResponseEntity<Object> addComment(@PathVariable("id") String id,
+                                          @Valid @RequestBody Assessment assessment){
+        try {
+            //Intentamos añadir el comentario:
+            Optional<Assessment> comment = movies.addComment(id, assessment);
+            //Devolvemos un estado Created con los datos del comentario añadido:
+            return ResponseEntity.created(URI.create(Constants.URL + "/movies/" +
+                    assessment.getMovie().getId() + "/comments/" + assessment.getId())).body(comment.get());
+        } catch (InvalidDataException e) {
+            //Si se captura exepción, se manda un estado BAD REQUEST:
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
+        }
     }
 
     /**
@@ -225,23 +231,22 @@ public class MovieController {
     @GetMapping(
             path = "{id}/comments",
             produces = MediaType.APPLICATION_JSON_VALUE
-    ) ResponseEntity<Page<Assessment>> getComments(
+    ) ResponseEntity getComments(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size,
             @RequestParam(name = "sort", defaultValue = "") List<String> sort,
             @PathVariable("id") String id
     ) {
-        List<Sort.Order> criteria = sort.stream().map(string -> {
-            if(string.startsWith("+")){
-                return Sort.Order.asc(string.substring(1));
-            } else if (string.startsWith("-")) {
-                return Sort.Order.desc(string.substring(1));
-            } else return null;
-        })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        //Transformamos la lista de criterios pasada como argumento para que puedan ser procesados en la consulta:
+        List<Sort.Order> criteria = AuxMethods.getSortCriteria(sort);
 
-        return ResponseEntity.of(movies.getComments(page, size, Sort.by(criteria), id));
+        try {
+            //Se trata de hacer la búsqueda:
+            return ResponseEntity.of(movies.getComments(page, size, Sort.by(criteria), id));
+        } catch (NoResultException e) {
+            //En caso de tener una excepción asociada a la inexistencia de resultados, se devuelve error:
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
+        }
     }
 
     /**
@@ -260,15 +265,18 @@ public class MovieController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<Assessment> modifyComment(@PathVariable("id") String movieId,
+    ResponseEntity<Object> modifyComment(@PathVariable("id") String movieId,
                                              @PathVariable("commentId") String commentId,
                                              @RequestBody Assessment assessment){
-        Optional<Assessment> result = movies.modifyComment(movieId,commentId,assessment);
-
-        if(result.isPresent()){
+        try {
+            //Se trata de modificar el comentario:
+            Optional<Assessment> result = movies.modifyComment(movieId,commentId,assessment);
+            //En caso de ejecución incorrecta, se da por hecho que la modificación se completó, se devuelve por ello
+            //un estado correcto.
             return ResponseEntity.ok(result.get());
-        } else {
-            return ResponseEntity.notFound().build();
+        } catch (InvalidDataException e) {
+            //Si se captura una excepción asociada a información incorrecta, se manda un bad request.
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
         }
     }
 
@@ -286,13 +294,16 @@ public class MovieController {
             path = "{id}/comments/{commentId}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity deleteComment(@PathVariable("id") String movieId,
+    ResponseEntity<Object> deleteComment(@PathVariable("id") String movieId,
                                  @PathVariable("commentId") String commentId){
-
-        if(movies.deleteComment(movieId, commentId)){
+        try {
+            //Se intenta borrar la película
+            movies.deleteComment(movieId, commentId);
+            //Se devuelve una respuesta correcta vacía (si se llega a este punto se pudo ejecutar el borrado):
             return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
+        } catch (InvalidDataException e) {
+            //Se devuelve un error en caso de capturar una excepción:
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
         }
     }
 }

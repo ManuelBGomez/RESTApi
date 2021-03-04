@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
 import java.util.Objects;
 import java.util.StringJoiner;
 
@@ -12,6 +15,8 @@ import java.util.StringJoiner;
 public class Assessment {
     @Id
     private String id;
+    @Min(value = 1, message = "Rating must be between 1 and 5")
+    @Max(value = 5, message = "Rating must be between 1 and 5")
     private Integer rating;
     private User user;
     private Film movie;
