@@ -2,13 +2,13 @@ package gal.usc.etse.grei.es.project.controller;
 
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoResultException;
+import gal.usc.etse.grei.es.project.service.AssessmentService;
 import gal.usc.etse.grei.es.project.utilities.AuxMethods;
 import gal.usc.etse.grei.es.project.utilities.Constants;
 import gal.usc.etse.grei.es.project.model.Assessment;
 import gal.usc.etse.grei.es.project.model.Film;
 import gal.usc.etse.grei.es.project.service.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,9 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.net.URI;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Clase MovieController -> Url para llegar: /movies
@@ -33,14 +31,18 @@ import java.util.stream.Collectors;
 public class MovieController {
     //Referencia a la clase MovieService:
     private final MovieService movies;
+    //Referencia a la clase AssessmentService:
+    private final AssessmentService assessments;
 
     /**
      * Constructor de la clase
      * @param movies Instancia de la clase MovieService
+     * @param assessments Instancia de la clase AssessmentService
      */
     @Autowired
-    public MovieController(MovieService movies) {
+    public MovieController(MovieService movies, AssessmentService assessments) {
         this.movies = movies;
+        this.assessments = assessments;
     }
 
     /**
@@ -206,7 +208,7 @@ public class MovieController {
                                           @Valid @RequestBody Assessment assessment){
         try {
             //Intentamos añadir el comentario:
-            Optional<Assessment> comment = movies.addComment(id, assessment);
+            Optional<Assessment> comment = assessments.addComment(id, assessment);
             //Devolvemos un estado Created con los datos del comentario añadido:
             return ResponseEntity.created(URI.create(Constants.URL + "/movies/" +
                     assessment.getMovie().getId() + "/comments/" + assessment.getId())).body(comment.get());
@@ -242,7 +244,7 @@ public class MovieController {
 
         try {
             //Se trata de hacer la búsqueda:
-            return ResponseEntity.of(movies.getComments(page, size, Sort.by(criteria), id));
+            return ResponseEntity.of(assessments.getComments(page, size, Sort.by(criteria), id));
         } catch (NoResultException e) {
             //En caso de tener una excepción asociada a la inexistencia de resultados, se devuelve error:
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
@@ -270,7 +272,7 @@ public class MovieController {
                                              @RequestBody Assessment assessment){
         try {
             //Se trata de modificar el comentario:
-            Optional<Assessment> result = movies.modifyComment(movieId,commentId,assessment);
+            Optional<Assessment> result = assessments.modifyComment(movieId,commentId,assessment);
             //En caso de ejecución incorrecta, se da por hecho que la modificación se completó, se devuelve por ello
             //un estado correcto.
             return ResponseEntity.ok(result.get());
@@ -298,7 +300,7 @@ public class MovieController {
                                  @PathVariable("commentId") String commentId){
         try {
             //Se intenta borrar la película
-            movies.deleteComment(movieId, commentId);
+            assessments.deleteComment(movieId, commentId);
             //Se devuelve una respuesta correcta vacía (si se llega a este punto se pudo ejecutar el borrado):
             return ResponseEntity.noContent().build();
         } catch (InvalidDataException e) {

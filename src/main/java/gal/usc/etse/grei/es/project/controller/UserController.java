@@ -3,6 +3,7 @@ package gal.usc.etse.grei.es.project.controller;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.AlreadyCreatedException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoDataException;
+import gal.usc.etse.grei.es.project.service.AssessmentService;
 import gal.usc.etse.grei.es.project.utilities.AuxMethods;
 import gal.usc.etse.grei.es.project.utilities.Constants;
 import gal.usc.etse.grei.es.project.model.Assessment;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 @RequestMapping("users")
 public class UserController {
     private final UserService users;
+    private final AssessmentService assessments;
 
     /**
      * Constructor de la clase
@@ -38,8 +40,9 @@ public class UserController {
      * @param users Instancia de la clase UserService
      */
     @Autowired
-    public UserController(UserService users){
+    public UserController(UserService users, AssessmentService assessments){
         this.users = users;
+        this.assessments = assessments;
     }
 
 
@@ -187,13 +190,19 @@ public class UserController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<User> addFriend(@PathVariable("id") String id, @RequestBody User newFriend){
+    ResponseEntity<Object> addFriend(@PathVariable("id") String id, @RequestBody User newFriend){
 
-        Optional<User> result = users.addFriend(id, newFriend);
-
-        if(result.isPresent()){
+        try {
+            //Llamamos al método de la clase de usuarios:
+            Optional<User> result = users.addFriend(id, newFriend);
+            //Devovlemos respuesta ok con los datos si ha ido bien la ejecución:
             return ResponseEntity.ok(result.get());
-        } else return ResponseEntity.notFound().build();
+            //Si se capturan excepciones, se devuelven estados erróneos (bad request o not found):
+        } catch (InvalidDataException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
+        } catch (NoDataException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
+        }
     }
 
     /**
@@ -209,16 +218,32 @@ public class UserController {
             path = "{id}/friends/{idFriend}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<User> deleteFriend(@PathVariable("id") String id,
+    ResponseEntity<Object> deleteFriend(@PathVariable("id") String id,
                                       @PathVariable("idFriend") String idFriend){
 
-        Optional<User> result = users.deleteFriend(id, idFriend);
-
-        if(result.isPresent()){
+        try {
+            //Se intenta hacer el borrado:
+            Optional<User> result = users.deleteFriend(id, idFriend);
             return ResponseEntity.ok(result.get());
-        } else return ResponseEntity.notFound().build();
+            //Si se capturan excepciones, se devuelven estados erróneos (bad request o not found):
+        } catch (InvalidDataException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
+        } catch (NoDataException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
+        }
     }
 
+    /**
+     * Método: GET
+     * Url para llegar: /users/{id}/comments
+     * Objetivo: recuperar los comentarios de un usuario.
+     *
+     * @param page Página a recuperar
+     * @param size Tamaño de la página
+     * @param sort Criterios de ordenación
+     * @param userId Identificador del usuario para el que se devolverán los comentarios
+     * @return los comentarios asociados al usuario correspondiente, o un estado not found si no los hay.
+     */
     @GetMapping(
             path = "{id}/comments",
             produces = MediaType.APPLICATION_JSON_VALUE
@@ -229,18 +254,11 @@ public class UserController {
             @RequestParam(name = "sort", defaultValue = "") List<String> sort,
             @PathVariable("id") String userId
     ) {
+        //Se recuperan los criterios de ordenación:
+        List<Sort.Order> criteria = AuxMethods.getSortCriteria(sort);
 
-        List<Sort.Order> criteria = sort.stream().map(string -> {
-            if(string.startsWith("+")){
-                return Sort.Order.asc(string.substring(1));
-            } else if (string.startsWith("-")) {
-                return Sort.Order.desc(string.substring(1));
-            } else return null;
-        })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.of(users.getUserComments(page, size, Sort.by(criteria), userId));
+        //Se hace la búsqueda y se devuelve el estado apropiado (por eso se usa of):
+        return ResponseEntity.of(assessments.getUserComments(page, size, Sort.by(criteria), userId));
     }
 
 }

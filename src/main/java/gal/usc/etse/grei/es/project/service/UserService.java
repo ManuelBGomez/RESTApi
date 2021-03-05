@@ -4,9 +4,7 @@ import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.AlreadyCreatedException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoDataException;
-import gal.usc.etse.grei.es.project.model.Assessment;
 import gal.usc.etse.grei.es.project.model.User;
-import gal.usc.etse.grei.es.project.repository.CommentRepository;
 import gal.usc.etse.grei.es.project.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
@@ -24,12 +22,15 @@ import java.util.Optional;
 public class UserService {
     //Referencias a las interfaces repository que necesitamos:
     private final UserRepository users;
-    private final CommentRepository comments;
 
+    /**
+     * Constructor de la clase
+     *
+     * @param users Referencia al repositorio de usuarios.
+     */
     @Autowired
-    public UserService(UserRepository users, CommentRepository comments){
+    public UserService(UserRepository users){
         this.users = users;
-        this.comments = comments;
     }
 
     /**
@@ -148,46 +149,57 @@ public class UserService {
         }
     }
 
-    public Optional<User> addFriend(String userId, User newFriend){
-        //Validamos campos:
-        if(newFriend != null && newFriend.getEmail() != null
-                && newFriend.getName() != null && !newFriend.getName().isEmpty()){
-            //Comprobamos que el usuario y el amigo no sean la misma persona:
-            if(!userId.equals(newFriend.getEmail())){
-                //Comprobamos que el usuario y el amigo existan en la db:
-                Optional<User> optUser = users.findById(userId);
-                if(optUser.isPresent()) {
-                    if(users.existsById(newFriend.getEmail())){
-                        //Recuperamos el usuario:
-                        User user = optUser.get();
-                        //Comprobamos si el array de amigos está vacío (para crearlo):
-                        if(user.getFriends() == null){
-                            user.setFriends(new ArrayList<>());
-                        }
-                        //Comprobamos si el usuario y el posible amigo ya lo son:
-                        if(!user.getFriends().contains(newFriend)){
-                            user.getFriends().add(newFriend);
-                            //Guardamos los cambios y devolvemos el resultado:
-                            return Optional.of(users.save(user));
-                        } else {
-                            System.out.println("Ya son amigos");
-                        }
+    /**
+     * Método que permite añadir un amigo a un usuario.
+     *
+     * @param userId El id del usuario a añadir.
+     * @param newFriend Los datos del nuevo amigo.
+     * @return El usuario completo con la lista de amigos añadida.
+     * @throws InvalidDataException Excepción lanzada en caso de datos incorrectos (usuarios ya amigos).
+     * @throws NoDataException Excepción lanzada en caso de datos desconocidos (usuario inexistente).
+     */
+    public Optional<User> addFriend(String userId, User newFriend) throws InvalidDataException, NoDataException {
+        //Comprobamos que el usuario y el amigo no sean la misma persona:
+        if(!userId.equals(newFriend.getEmail())){
+            //Comprobamos que el usuario y el amigo existan en la db:
+            Optional<User> optUser = users.findById(userId);
+            if(optUser.isPresent()) {
+                if(users.existsById(newFriend.getEmail())){
+                    //Recuperamos el usuario:
+                    User user = optUser.get();
+                    //Comprobamos si el array de amigos está vacío (para crearlo):
+                    if(user.getFriends() == null){
+                        user.setFriends(new ArrayList<>());
+                    }
+                    //Comprobamos si el usuario y el posible amigo ya lo son:
+                    if(!user.getFriends().contains(newFriend)){
+                        user.getFriends().add(newFriend);
+                        //Guardamos los cambios y devolvemos el resultado:
+                        return Optional.of(users.save(user));
                     } else {
-                        System.out.println("No existe posible amigo con ese mail");
+                        throw new InvalidDataException(ErrorType.INVALID_INFO, "Both users already are friends");
                     }
                 } else {
-                    System.out.println("No existe ningun usuario con ese id");
+                    throw new NoDataException(ErrorType.UNKNOWN_INFO, "Friend cannot be added: user does not exist");
                 }
             } else {
-                System.out.println("Misma persona");
+                throw new NoDataException(ErrorType.UNKNOWN_INFO, "There is no user with that id");
             }
         } else {
-            System.out.println("Validacion erronea");
+            throw new InvalidDataException(ErrorType.INVALID_INFO, "An user cannot be friend of himself");
         }
-        return Optional.empty();
     }
 
-    public Optional<User> deleteFriend(String userId, String friendId) {
+    /**
+     * Método que permite eliminar un amigo de un usuario.
+     *
+     * @param userId El id del usuario.
+     * @param friendId El id del amigo a eliminar
+     * @return El usuario completo sin el amigo.
+     * @throws InvalidDataException Excepción lanzada si hay incoherencias
+     * @throws NoDataException Excepción lanzada si algún dato no existe (usuario, amigo).
+     */
+    public Optional<User> deleteFriend(String userId, String friendId) throws InvalidDataException, NoDataException {
         //Comprobamos que el id de usuario sea válido:
         Optional<User> user = users.findById(userId);
         if(user.isPresent()){
@@ -205,23 +217,25 @@ public class UserService {
                         return user1.getEmail().equals(friendUser.getEmail());
                     });
                     return Optional.of(users.save(resultUser));
+                    //En caso de no cumplirse las condiciones, se lanzan excepciones:
+                } else {
+                    throw new InvalidDataException(ErrorType.INVALID_INFO, "Both users are not friends");
                 }
+            } else {
+                throw new NoDataException(ErrorType.UNKNOWN_INFO, "Friend does not exists");
             }
         } else {
-            System.out.println("Id incorrecto");
+            throw new NoDataException(ErrorType.UNKNOWN_INFO, "User does not exists");
         }
-        return Optional.empty();
     }
 
-    public Optional<Page<Assessment>> getUserComments(int page, int size, Sort sort, String userId){
-        Pageable request = PageRequest.of(page, size, sort);
-        //Ejecutamos la búsqueda:
-        Page<Assessment> result = comments.findAllByUserEmail(userId, request);
-        //Si no hay resultados se devuelve un elemento vacío:
-        if(result.isEmpty()){
-            return Optional.empty();
-        } else {
-            return Optional.of(result);
-        }
+    /**
+     * Método que comprueba si un usuario existe en base a su id
+     * @param userId El id del posible usuario
+     * @return Un booleano que indica si el usuario existe o no.
+     */
+    public boolean existsById(String userId){
+        return users.existsById(userId);
     }
+
 }
