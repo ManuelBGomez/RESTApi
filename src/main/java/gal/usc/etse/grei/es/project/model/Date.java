@@ -2,13 +2,17 @@ package gal.usc.etse.grei.es.project.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import javax.validation.constraints.NotEmpty;
 import java.util.Objects;
 import java.util.StringJoiner;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Date {
+    @NotEmpty
     private Integer day;
+    @NotEmpty
     private Integer month;
+    @NotEmpty
     private Integer year;
 
     public Date() {

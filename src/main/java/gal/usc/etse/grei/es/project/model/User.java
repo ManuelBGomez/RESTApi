@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.StringJoiner;
 public class User {
     @Id
     @NotEmpty
+    @Email
     private String email;
     @NotEmpty
     private String name;

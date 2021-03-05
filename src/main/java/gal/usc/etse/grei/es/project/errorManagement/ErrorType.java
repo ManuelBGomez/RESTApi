@@ -7,6 +7,8 @@ package gal.usc.etse.grei.es.project.errorManagement;
 public enum ErrorType {
     NO_RESULT,
     INVALID_INFO,
-    UNKNOWN_INFO
+    UNKNOWN_INFO,
+    EXISTING_DATA,
+    FORBIDDEN
 
 }

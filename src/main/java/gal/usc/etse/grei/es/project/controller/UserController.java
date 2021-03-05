@@ -1,5 +1,9 @@
 package gal.usc.etse.grei.es.project.controller;
 
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.AlreadyCreatedException;
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoDataException;
+import gal.usc.etse.grei.es.project.utilities.AuxMethods;
 import gal.usc.etse.grei.es.project.utilities.Constants;
 import gal.usc.etse.grei.es.project.model.Assessment;
 import gal.usc.etse.grei.es.project.model.User;
@@ -76,16 +80,9 @@ public class UserController {
             @RequestParam(name = "name", required = false) String name,
             @RequestParam(name = "email", required = false) String email
     ) {
-        List<Sort.Order> criteria = sort.stream().map(string -> {
-            if(string.startsWith("+")){
-                return Sort.Order.asc(string.substring(1));
-            } else if (string.startsWith("-")) {
-                return Sort.Order.desc(string.substring(1));
-            } else return null;
-        })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-
+        //Recuperamos los criterios de ordenación:
+        List<Sort.Order> criteria = AuxMethods.getSortCriteria(sort);
+        //Devolvemos la ResponseEntity adecuada (ok si hay resultados, not found si no los hay):
         return ResponseEntity.of(users.get(page, size, Sort.by(criteria), name, email));
     }
 
@@ -96,20 +93,23 @@ public class UserController {
      * Objetivo: crear un nuevo usuario con los datos facilitados.
      *
      * @param user Los datos del nuevo usuario que se quiere insertar
-     * @return Los datos del usuario insertado y la url para recuperar su información
+     * @return Los datos del usuario insertado y la url para recuperar su información, o un estado erróneo
+     * si es preciso.
      */
     @PostMapping(
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<User> create(@Valid @RequestBody User user){
-        Optional<User> inserted = users.create(user);
-
-        if(!inserted.isPresent()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        } else {
+    ResponseEntity<Object> create(@Valid @RequestBody User user){
+        try {
+            //Se intenta crear el usuario:
+            Optional<User> inserted = users.create(user);
+            //Se devuelve un estado creado, con la URI con la que se puede acceder a él:
             return ResponseEntity.created(URI.create(Constants.URL + "/users/" + inserted.get().getEmail()))
                     .body(inserted.get());
+        } catch (AlreadyCreatedException e) {
+            //Si se captura la excepción que el método puede lanzar, se envía un estado de error:
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getErrorObject());
         }
     }
 
@@ -126,13 +126,17 @@ public class UserController {
             path = "{id}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity delete(
+    ResponseEntity<Object> delete(
                 @PathVariable("id") String id
             ) {
-        if(users.delete(id)){
+        try {
+            //Se intenta borrar el usuario:
+            users.delete(id);
+            //Si se consigue, se devuelve un estado noContent (no hay nada que devolver):
             return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
+        } catch (NoDataException e) {
+            //Si salta la excepción, entonces se devuelve un not found (no se encuentra el usuario a borrar):
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
         }
     }
 
@@ -152,13 +156,19 @@ public class UserController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<User> update(@PathVariable("id") String id, @Valid @RequestBody User user){
-        Optional<User> result = users.update(id, user);
-
-        if(result.isPresent()){
+    ResponseEntity<Object> update(@PathVariable("id") String id, @Valid @RequestBody User user){
+        try {
+            //Se intenta hacer la actualización:
+            Optional<User> result = users.update(id, user);
+            //Si es correcta, se devuelve estado ok con los datos actualizados:
             return ResponseEntity.ok(result.get());
-        } else {
-            return ResponseEntity.notFound().build();
+            //Si se reciben excepciones, se devuelven los estados que se consideran apropiados:
+        } catch (InvalidDataException e) {
+            //Para datos inválidos, un BAD REQUEST:
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
+        } catch (NoDataException e) {
+            //Para inexistencia de algún dato, un NOT FOUND:
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
         }
     }
 
