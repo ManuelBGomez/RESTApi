@@ -1,6 +1,5 @@
 package gal.usc.etse.grei.es.project.errorManagement;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.util.List;

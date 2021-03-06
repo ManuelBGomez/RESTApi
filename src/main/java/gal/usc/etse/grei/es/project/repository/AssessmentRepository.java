@@ -10,4 +10,6 @@ public interface AssessmentRepository extends MongoRepository<Assessment, String
     Page<Assessment> findAllByMovieId(String movieId, Pageable pageable);
 
     Page<Assessment> findAllByUserEmail(String userId, Pageable pageable);
+
+    boolean existsAssessmentByMovieIdAndUserEmail(String movieId, String userId);
 }

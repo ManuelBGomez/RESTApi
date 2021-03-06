@@ -1,6 +1,9 @@
 package gal.usc.etse.grei.es.project.controller;
 
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.AlreadyCreatedException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
+import gal.usc.etse.grei.es.project.model.validation.createValidation;
+import gal.usc.etse.grei.es.project.model.validation.modifyValidation;
 import gal.usc.etse.grei.es.project.service.AssessmentService;
 import gal.usc.etse.grei.es.project.utilities.AuxMethods;
 import gal.usc.etse.grei.es.project.utilities.Constants;
@@ -13,6 +16,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -195,7 +199,7 @@ public class MovieController {
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<Object> addComment(@PathVariable("id") String id,
-                                           @RequestBody @Valid Assessment assessment){
+                                           @RequestBody @Validated(createValidation.class) Assessment assessment){
         try {
             //Intentamos añadir el comentario:
             Optional<Assessment> comment = assessments.addComment(id, assessment);
@@ -205,6 +209,9 @@ public class MovieController {
         } catch (InvalidDataException e) {
             //Si se captura exepción, se manda un estado BAD REQUEST:
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
+        } catch (AlreadyCreatedException e) {
+            //Si ya hay comentario del usuario indicado para la película, se manda estado conflict:
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getErrorObject());
         }
     }
 
@@ -254,7 +261,7 @@ public class MovieController {
     )
     ResponseEntity<Object> modifyComment(@PathVariable("id") String movieId,
                                              @PathVariable("commentId") String commentId,
-                                             @Valid @RequestBody Assessment assessment){
+                                             @Validated(modifyValidation.class) @RequestBody Assessment assessment){
         try {
             //Se trata de modificar el comentario:
             Optional<Assessment> result = assessments.modifyComment(movieId,commentId,assessment);

@@ -1,9 +1,9 @@
 package gal.usc.etse.grei.es.project.service;
 
 import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.AlreadyCreatedException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
 import gal.usc.etse.grei.es.project.model.Assessment;
-import gal.usc.etse.grei.es.project.model.Film;
 import gal.usc.etse.grei.es.project.repository.AssessmentRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -45,22 +45,29 @@ public class AssessmentService {
      * @throws InvalidDataException Excepción asociada a la introducción de datos incorrectos. En este caso
      *      a una película incorrecta o un usuario inexistente.
      */
-    public Optional<Assessment> addComment(String id, Assessment assessment) throws InvalidDataException {
+    public Optional<Assessment> addComment(String id, Assessment assessment) throws InvalidDataException, AlreadyCreatedException {
+        //Comprobamos que la película coincide con la pasada por la uri:
+        if(!assessment.getMovie().getId().equals(id)) {
+            throw new InvalidDataException(ErrorType.INVALID_INFO, "Movie URI id and assesment movie id don't match");
+        }
+
         //Comprobamos que la película existe:
-        Optional<Film> movie = movies.get(id);
-        if(movie.isPresent()){
-            //Comprobamos si el usuario existe:
-            if(users.existsById(assessment.getUser().getEmail())){
-                //Añadimos el comentario, añadiendo antes los datos de la película:
-                assessment.setMovie(new Film().setId(movie.get().getId()).setTitle(movie.get().getTitle()));
-                return Optional.of(assessments.insert(assessment));
-                //En caso de errores, lanzamos sendas excepciones:
-            } else {
-                throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "The specified user does not exists");
-            }
-        } else {
+        if(!movies.existsById(id)){
             throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "The specified film does not exists");
         }
+
+        //Comprobamos si el usuario existe:
+        if(!users.existsById(assessment.getUser().getEmail())){
+            throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "The specified user does not exists");
+        }
+
+        //Comprobamos si este usuario ya hizo un comentario de esa película:
+        if(assessments.existsAssessmentByMovieIdAndUserEmail(id, assessment.getUser().getEmail())){
+            throw new AlreadyCreatedException(ErrorType.EXISTING_DATA, "The specified user already has a comment in the specified film");
+        }
+
+        //Si llegamos a este punto, ejecutamos la inserción:
+        return Optional.of(assessments.insert(assessment));
     }
 
     /**
@@ -90,32 +97,35 @@ public class AssessmentService {
      * @return El comentario modificado.
      * @throws InvalidDataException Excepción lanzada en caso de pasar algún parámetro incorrecto.
      */
-    public Optional<Assessment> modifyComment(String movieId, String commentId, Assessment assessment) throws InvalidDataException {
-        //Comprobamos que la película existe:
-        if(movies.existsById(movieId)){
-            //Comprobamos que el assessment existe:
-            Optional<Assessment> originalComment = assessments.findById(commentId);
-            if(originalComment.isPresent()){
-                //Comprobamos que el comentario sea de la película:
-                if(originalComment.get().getMovie().getId().equals(movieId)){
-                    //Comprobamos también que el comentario coincida con el del id:
-                    if(assessment.getId() != null && assessment.getId().equals(commentId)){
-                        //Añadimos los cambios si se cumplieron todos los criterios:
-                        return Optional.of(assessments.save(assessment));
-                    } else {
-                        throw new InvalidDataException(ErrorType.INVALID_INFO,
-                                "URL comment id and consumed id don't match");
-                    }
-                } else {
-                    throw new InvalidDataException(ErrorType.INVALID_INFO,
-                            "The comment id does not correspond with the film id");
-                }
-            } else {
-                throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "There is no comment with the specified ID");
-            }
-        } else {
-            throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "There is no film with the specified ID");
+    public Optional<Assessment> modifyComment(String movieId, String commentId, Assessment assessment)
+            throws InvalidDataException {
+
+        //Comprobamos que la película coincide con la pasada por la uri:
+        if(!assessment.getMovie().getId().equals(movieId)) {
+            throw new InvalidDataException(ErrorType.INVALID_INFO, "Movie URI id and assesment movie id don't match");
         }
+
+        //Lo mismo para los IDs de los comentarios:
+        if(!assessment.getId().equals(commentId)) {
+            throw new InvalidDataException(ErrorType.INVALID_INFO, "Assessment URI id and assesment id don't match");
+        }
+
+        //Comprobamos que el comentario existe:
+        Assessment oldAssessment = assessments.findById(commentId).orElseThrow(()->
+                new InvalidDataException(ErrorType.UNKNOWN_INFO, "The specified assessment does not exists"));
+
+        //Comprobamos que la película no cambie:
+        if(!oldAssessment.getMovie().getId().equals(assessment.getMovie().getId())){
+            throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "Movie cannot be changed");
+        }
+
+        //Comprobamos que el usuario no cambie:
+        if(!users.existsById(assessment.getUser().getEmail())){
+            throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "User cannot be changed");
+        }
+
+        //Si llegamos a este punto, guardamos el comentario actualizado:
+        return Optional.of(assessments.save(assessment));
     }
 
     /**
@@ -126,25 +136,22 @@ public class AssessmentService {
      */
     public void deleteComment(String movieId, String commentId) throws InvalidDataException {
         //Comprobamos existencia de la película, del comentario y su relación:
-        if(movies.existsById(movieId)){
-            Optional<Assessment> commentInfo = assessments.findById(commentId);
-            if(commentInfo.isPresent()){
-                if(commentInfo.get().getMovie().getId().equals(movieId)){
-                    //Si se llega a este punto, se elimina el comentario:
-                    assessments.deleteById(commentId);
-                    //Si hay errores en las comprobaciones anteriores, se lanzan sendas excepciones.
-                } else {
-                    throw new InvalidDataException(ErrorType.INVALID_INFO,
-                            "The specified comment is not related with the specified film.");
-                }
-            } else {
-                throw new InvalidDataException(ErrorType.UNKNOWN_INFO,
-                        "The specified comment does not exists");
-            }
-        } else {
-            throw new InvalidDataException(ErrorType.UNKNOWN_INFO,
-                    "The specified film does not exists");
+        if(!movies.existsById(movieId)){
+            throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "The specified film does not exists");
         }
+
+        //Comprobamos que el comentario existe:
+        Assessment assessment = assessments.findById(commentId).orElseThrow(()->
+                new InvalidDataException(ErrorType.UNKNOWN_INFO, "The specified assessment does not exists"));
+
+        //Comprobamos que el comentario está correctamente asociado a la película:
+        if(!assessment.getMovie().getId().equals(movieId)){
+            throw new InvalidDataException(ErrorType.INVALID_INFO,
+                    "The specified comment is not related with the specified film.");
+        }
+
+        //Si se llega a este punto, se elimina el comentario:
+        assessments.deleteById(commentId);
     }
 
     /**
