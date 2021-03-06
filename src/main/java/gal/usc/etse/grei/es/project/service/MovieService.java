@@ -1,6 +1,5 @@
 package gal.usc.etse.grei.es.project.service;
 
-import com.mongodb.BasicDBList;
 import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoResultException;
@@ -8,9 +7,12 @@ import gal.usc.etse.grei.es.project.model.*;
 import gal.usc.etse.grei.es.project.repository.MovieRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,14 +25,17 @@ import java.util.Optional;
 public class MovieService {
     //Referencias a las interfaces repository que necesitamos en esta clase:
     private final MovieRepository movies;
+    private final MongoTemplate mongoTemplate;
 
     /**
      * Constructor de la clase
      * @param movies Referencia al MovieRepository
+     * @param mongoTemplate Referencia a MongoTemplate, para la consulta de películas.
      */
     @Autowired
-    public MovieService(MovieRepository movies) {
+    public MovieService(MovieRepository movies, MongoTemplate mongoTemplate) {
         this.movies = movies;
+        this.mongoTemplate = mongoTemplate;
     }
 
     /**
@@ -48,64 +53,37 @@ public class MovieService {
      * @param month Mes del año por el que se puede realizar la búsqueda.
      * @param year Año por el cual se puede realizar la búsqueda de películas.
      * @return Lista de películas (formato optional) obtenidas por la búsqueda.
-     * @throws NoResultException excepción en caso de no encontrar resultados para la búsqueda.
      */
     public Optional<Page<Film>> get(int page, int size, Sort sort, List<String> keywords,
                                     List<String> genres, List<String> cast, List<String> crew,
-                                    List<String> producers, Integer day, Integer month, Integer year) throws NoResultException {
+                                    List<String> producers, Integer day, Integer month, Integer year) {
         //Creamos un objeto de Pageable para poder hacer la búsqueda por páginas:
         Pageable request = PageRequest.of(page, size, sort);
 
-        //Creamos las listas de productores, miembros de cast o miembros de la crew si existen:
-        List<Producer> possibleProducers = producers != null ? new ArrayList<>() : null;
-        List<Cast> possibleCast = cast != null ? new ArrayList<>() : null;
-        List<Crew> possibleCrew = crew != null ? new ArrayList<>() : null;
+        //Establecemos criterios de búsqueda. En primer lugar, existencia de id:
+        Criteria criteria = Criteria.where("_id").exists(true);
 
-        //Si existen esas listas, además, creamos productores, miembros de cast/crew, y les asignamos nombre
-        //para hacer la búsqueda.
-        if(producers != null) producers.forEach((member) -> possibleProducers.add(new Producer().setName(member)));
-        if(cast != null) cast.forEach((member) -> possibleCast.add((Cast) new Cast().setName(member)));
-        if(crew != null) crew.forEach((member) -> possibleCrew.add((Crew) new Crew().setName(member)));
+        //A partir de ahí, vamos añadiendo criterios en función de todos los que se fuesen facilitando:
+        if(keywords != null) criteria.and("keywords").all(keywords);
+        if(genres != null) criteria.and("genres").all(genres);
+        if(cast != null) criteria.and("cast.name").all(cast);
+        if(crew != null) criteria.and("crew.name").all(crew);
+        if(producers != null) criteria.and("producers.name").all(producers);
+        if(day != null) criteria.and("birthday.day").is(day);
+        if(month != null) criteria.and("birthday.month").is(month);
+        if(year != null) criteria.and("birthday.year").is(year);
 
-        //Creamos el ExampleMatcher para poder hacer las búsquedas por los distintos parámetros.
-        //Todas las keywords, géneros y personas se buscan por exactitud e ignorando mayúsculas:
-        ExampleMatcher matcher = ExampleMatcher.matchingAll()
-                .withIgnoreCase()
-                .withMatcher("keywords",
-                        matcher1 -> matcher1.transform(source ->
-                                Optional.of(((BasicDBList) source.get()).iterator().next())).exact().ignoreCase())
-                .withMatcher("genres",
-                        matcher1 -> matcher1.transform(source ->
-                                Optional.of(((BasicDBList) source.get()).iterator().next())).exact().ignoreCase())
-                .withMatcher("crew",
-                        matcher1 -> matcher1.transform(source ->
-                                Optional.of(((BasicDBList) source.get()).iterator().next())).exact().ignoreCase())
-                .withMatcher("cast",
-                        matcher1 -> matcher1.transform(source ->
-                                Optional.of(((BasicDBList) source.get()).iterator().next())).exact().ignoreCase())
-                .withMatcher("producers",
-                        matcher1 -> matcher1.transform(source ->
-                                Optional.of(((BasicDBList) source.get()).iterator().next())).exact().ignoreCase());
+        //Se crea un primer objeto query que devuelva únicamente los resultados de la página que corresponda.
+        Query query = Query.query(criteria).with(request);
+        //Se incluyen solamente los campos pedidos:
+        query.fields().include("_id", "title", "overview", "genres", "releaseDate", "resources");
 
-        //Se crea el example con todos los parámetros por los que se va a hacer la búsqueda
-        //Si alguno de los posibles parámetros no se pasó, permanece a null (por lo que no se busca por él).
-        Example<Film> filter = Example.of(new Film().setGenres(genres).setKeywords(keywords)
-                .setCast(possibleCast).setCrew(possibleCrew).setProducers(possibleProducers)
-                .setReleaseDate(new Date().setDay(day).setMonth(month).setYear(year)), matcher);
+        //Se hace otro objeto query que nos devuelva todos los resultados, sin tener la paginación en cuenta.
+        Query countQuery = Query.query(criteria);
 
-        //Llamamos a findAll para hacer la búsqueda de películas:
-        Page<Film> result = movies.findAll(filter, request);
-
-        //Si no se devuelve resultado, se lanzará excepción:
-        if(result.isEmpty())
-            throw new NoResultException(ErrorType.NO_RESULT, "No results returned for the specified query");
-
-        result.forEach((it) -> {
-            it.setTagline(null).setCollection(null).setKeywords(null)/*.setProducers(null)*/.setCrew(null)
-                    .setCast(null).setBudget(null).setStatus(null).setRuntime(null).setRevenue(null);
-        });
-
-        return Optional.of(result);
+        //Se devuelve el resultado (haciendo todas  las querys necesarias con el mongoTemplate
+        return Optional.of(PageableExecutionUtils.getPage(mongoTemplate.find(query, Film.class), request,
+                ()->mongoTemplate.count(countQuery, Film.class)));
     }
 
 

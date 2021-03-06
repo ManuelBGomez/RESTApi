@@ -81,14 +81,9 @@ public class MovieController {
         //Transformamos la lista de criterios pasada como argumento para que puedan ser procesados en la consulta:
         List<Sort.Order> criteria = AuxMethods.getSortCriteria(sort);
 
-        try {
-            //Si la consulta devuelve resultados, se devolverán directamente:
-            return ResponseEntity.of(movies.get(page, size, Sort.by(criteria), keywords, genres,
-                    cast, crew, producers, day, month, year));
-        } catch (NoResultException e) {
-            //Si no, se enviará una respuesta personalizada:
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
-        }
+        //Se devuelven los resultados:
+        return ResponseEntity.of(movies.get(page, size, Sort.by(criteria), keywords, genres,
+                cast, crew, producers, day, month, year));
     }
 
     /**
