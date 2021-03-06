@@ -1,5 +1,9 @@
 package gal.usc.etse.grei.es.project.errorManagement;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -8,20 +12,37 @@ import java.util.Objects;
  *
  * @author Manuel Bendaña
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorObject {
     //Tipo de error: clase Enum.
     private ErrorType errorType;
     //Descripción del error.
     private String description;
+    //Detalle de errores
+    private List<String> errorDetails;
 
     /**
      * Constructor de la clase.
+     * Se usará cuando no queramos dar más detalles de un error que una breve descripción.
      * @param type Tipo de error ocurrido.
      * @param description Detalle del error ocurrido.
      */
     public ErrorObject(ErrorType type, String description){
         this.errorType = type;
         this.description = description;
+    }
+
+    /**
+     * Constructor de la clase.
+     * Se usará cuando pueda haber varios errores y se quieran detallar.
+     * @param errorType Tipo de error ocurrido.
+     * @param description Descripción del error ocurrido.
+     * @param errorDetails Errores detallados.
+     */
+    public ErrorObject(ErrorType errorType, String description, List<String> errorDetails) {
+        this.errorType = errorType;
+        this.description = description;
+        this.errorDetails = errorDetails;
     }
 
     /**
@@ -61,6 +82,24 @@ public class ErrorObject {
     }
 
     /**
+     * Getter de los detalles del error
+     * @return Lista de problemas.
+     */
+    public List<String> getErrorDetails() {
+        return errorDetails;
+    }
+
+    /**
+     * Setter de los detalles del error.
+     * @param errorDetails Lista de problemas.
+     * @return El objeto de error una vez modificado.
+     */
+    public ErrorObject setErrorDetails(List<String> errorDetails) {
+        this.errorDetails = errorDetails;
+        return this;
+    }
+
+    /**
      * Método toString
      * @return el objeto de error convertido a string
      */
@@ -93,4 +132,5 @@ public class ErrorObject {
     public int hashCode() {
         return Objects.hash(errorType, description);
     }
+
 }

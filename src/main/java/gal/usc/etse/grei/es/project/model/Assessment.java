@@ -6,7 +6,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.util.Objects;
 import java.util.StringJoiner;
 
@@ -15,10 +15,13 @@ import java.util.StringJoiner;
 public class Assessment {
     @Id
     private String id;
-    @Min(value = 1, message = "Rating must be between 1 and 5")
-    @Max(value = 5, message = "Rating must be between 1 and 5")
+    @Min(value = 1, message = "must be between 1 and 5")
+    @Max(value = 5, message = "must be between 1 and 5")
+    @NotNull(message = "no rating specified")
     private Integer rating;
+    @NotNull(message = "no user specified")
     private User user;
+    @NotNull(message = "no data specified")
     private Film movie;
     private String comment;
 

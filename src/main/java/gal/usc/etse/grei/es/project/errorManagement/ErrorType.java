@@ -5,10 +5,10 @@ package gal.usc.etse.grei.es.project.errorManagement;
  * @author Manuel Bendaña
  */
 public enum ErrorType {
-    NO_RESULT,
     INVALID_INFO,
     UNKNOWN_INFO,
     EXISTING_DATA,
-    FORBIDDEN
+    FORBIDDEN,
+    INVALID_PARAMETER
 
 }

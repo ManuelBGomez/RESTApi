@@ -195,7 +195,7 @@ public class MovieController {
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<Object> addComment(@PathVariable("id") String id,
-                                          @Valid @RequestBody Assessment assessment){
+                                           @RequestBody @Valid Assessment assessment){
         try {
             //Intentamos añadir el comentario:
             Optional<Assessment> comment = assessments.addComment(id, assessment);
@@ -254,7 +254,7 @@ public class MovieController {
     )
     ResponseEntity<Object> modifyComment(@PathVariable("id") String movieId,
                                              @PathVariable("commentId") String commentId,
-                                             @RequestBody Assessment assessment){
+                                             @Valid @RequestBody Assessment assessment){
         try {
             //Se trata de modificar el comentario:
             Optional<Assessment> result = assessments.modifyComment(movieId,commentId,assessment);
