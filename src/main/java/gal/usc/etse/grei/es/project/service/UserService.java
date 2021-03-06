@@ -35,8 +35,8 @@ public class UserService {
 
     /**
      * Método que permite recuperar el usuario con el id pasado:
-     * @param id
-     * @return
+     * @param id El id del usuario por el que filtrar
+     * @return Los datos del usuario con el id facilitado
      */
     public Optional<User> get(String id){
         return users.findById(id);

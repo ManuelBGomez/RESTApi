@@ -1,7 +1,6 @@
 package gal.usc.etse.grei.es.project.controller;
 
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
-import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoResultException;
 import gal.usc.etse.grei.es.project.service.AssessmentService;
 import gal.usc.etse.grei.es.project.utilities.AuxMethods;
 import gal.usc.etse.grei.es.project.utilities.Constants;
@@ -9,6 +8,7 @@ import gal.usc.etse.grei.es.project.model.Assessment;
 import gal.usc.etse.grei.es.project.model.Film;
 import gal.usc.etse.grei.es.project.service.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -65,7 +65,7 @@ public class MovieController {
      */
     @GetMapping(
             produces = MediaType.APPLICATION_JSON_VALUE
-    ) ResponseEntity get(
+    ) ResponseEntity<Page<Film>> get(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size,
             @RequestParam(name = "sort", defaultValue = "") List<String> sort,
@@ -98,14 +98,9 @@ public class MovieController {
             path = "{id}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity get(@PathVariable("id") String id) {
-        try {
-            //Tratamos de recuperar la película:
-            return ResponseEntity.of(movies.get(id));
-        } catch (NoResultException e) {
-            //Si no se consigue recuperar, capturamos la excepción lanzada y enviamos mensaje de error:
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
-        }
+    ResponseEntity<Film> get(@PathVariable("id") String id) {
+        //Tratamos de recuperar la película:
+        return ResponseEntity.of(movies.get(id));
     }
 
     /**
@@ -228,7 +223,7 @@ public class MovieController {
     @GetMapping(
             path = "{id}/comments",
             produces = MediaType.APPLICATION_JSON_VALUE
-    ) ResponseEntity getComments(
+    ) ResponseEntity<Page<Assessment>> getComments(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size,
             @RequestParam(name = "sort", defaultValue = "") List<String> sort,
@@ -237,13 +232,8 @@ public class MovieController {
         //Transformamos la lista de criterios pasada como argumento para que puedan ser procesados en la consulta:
         List<Sort.Order> criteria = AuxMethods.getSortCriteria(sort);
 
-        try {
-            //Se trata de hacer la búsqueda:
-            return ResponseEntity.of(assessments.getComments(page, size, Sort.by(criteria), id));
-        } catch (NoResultException e) {
-            //En caso de tener una excepción asociada a la inexistencia de resultados, se devuelve error:
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
-        }
+        //Se trata de hacer la búsqueda:
+        return ResponseEntity.of(assessments.getComments(page, size, Sort.by(criteria), id));
     }
 
     /**

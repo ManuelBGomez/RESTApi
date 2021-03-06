@@ -2,7 +2,6 @@ package gal.usc.etse.grei.es.project.service;
 
 import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
-import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoResultException;
 import gal.usc.etse.grei.es.project.model.Assessment;
 import gal.usc.etse.grei.es.project.model.Film;
 import gal.usc.etse.grei.es.project.repository.AssessmentRepository;
@@ -48,7 +47,7 @@ public class AssessmentService {
      */
     public Optional<Assessment> addComment(String id, Assessment assessment) throws InvalidDataException {
         //Comprobamos que la película existe:
-        Optional<Film> movie = movies.getById(id);
+        Optional<Film> movie = movies.get(id);
         if(movie.isPresent()){
             //Comprobamos si el usuario existe:
             if(users.existsById(assessment.getUser().getEmail())){
@@ -72,19 +71,13 @@ public class AssessmentService {
      * @param sort criterios de ordenación.
      * @param id identificador de la película.
      * @return Los comentarios obtenidos para los criterios especificados.
-     * @throws NoResultException excepción asociada a la inexistencia de resultados.
      */
-    public Optional<Page<Assessment>> getComments(int page, int size, Sort sort, String id) throws NoResultException {
+    public Optional<Page<Assessment>> getComments(int page, int size, Sort sort, String id) {
         //Creamos objeto de pageable para la búsqueda por páginas:
         Pageable request = PageRequest.of(page, size, sort);
         //Se intenta hacer la búsqueda:
         Page<Assessment> result = assessments.findAllByMovieId(id, request);
-        //Lanzamos excepción asociada a la inexistencia de resultados en caso de resultado vacío:
-        if(result.isEmpty()){
-            throw new NoResultException(ErrorType.NO_RESULT,
-                    "No comments found for the specified film with the specified criteria.");
-        }
-        //Si no, se devuelve el optional del resultado:
+        //Se devuelve el optional del resultado:
         return Optional.of(result);
     }
 

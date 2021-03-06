@@ -2,7 +2,6 @@ package gal.usc.etse.grei.es.project.service;
 
 import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
-import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoResultException;
 import gal.usc.etse.grei.es.project.model.*;
 import gal.usc.etse.grei.es.project.repository.MovieRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,9 +68,9 @@ public class MovieService {
         if(cast != null) criteria.and("cast.name").all(cast);
         if(crew != null) criteria.and("crew.name").all(crew);
         if(producers != null) criteria.and("producers.name").all(producers);
-        if(day != null) criteria.and("birthday.day").is(day);
-        if(month != null) criteria.and("birthday.month").is(month);
-        if(year != null) criteria.and("birthday.year").is(year);
+        if(day != null) criteria.and("releaseDate.day").is(day);
+        if(month != null) criteria.and("releaseDate.month").is(month);
+        if(year != null) criteria.and("releaseDate.year").is(year);
 
         //Se crea un primer objeto query que devuelva únicamente los resultados de la página que corresponda.
         Query query = Query.query(criteria).with(request);
@@ -92,15 +91,10 @@ public class MovieService {
      *
      * @param id El id de la película a recuperar
      * @return Los datos de la película con el id facilitado (si se encuentra).
-     * @throws NoResultException Excepción lanzada en caso de no encontrar resultados.
      */
-    public Optional<Film> get(String id) throws NoResultException {
+    public Optional<Film> get(String id) {
         //Se recupera la película con el id pasado:
-        Optional<Film> mv = movies.findById(id);
-        //Devolvemos la película si se obtuvo resultado:
-        if(mv.isPresent()) return mv;
-        //Si no, se lanza la excepción con un mensaje personalizado:
-        else throw new NoResultException(ErrorType.NO_RESULT, "No movie found with the specified id");
+        return movies.findById(id);
     }
 
     /**
@@ -157,15 +151,6 @@ public class MovieService {
             //Si no, se lanza una excepción indicando que no se ha encontrado película
             throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "No film found with the specified ID.");
         }
-    }
-
-    /**
-     * Método que permite recuperar una película por su id.
-     * @param movieId El id de la película a recuperar.
-     * @return Un optional con la película.
-     */
-    public Optional<Film> getById(String movieId){
-        return movies.findById(movieId);
     }
 
     /**
