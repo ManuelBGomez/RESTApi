@@ -128,25 +128,18 @@ public class UserService {
      */
     public Optional<User> update(String id, User user) throws InvalidDataException, NoDataException {
         //Empezamos comprobando que los ids coincidan:
-        if(user.getEmail().equals(id)){
-            //Comprobamos que el id del usuario existe en la bd:
-            if(users.existsById(id)){
-                //Existe - Comprobamos que el campo birthday no se haya cambiado:
-                User oldUser = users.findById(id).get();
-                //Comprobamos si las fechas son coincidentes:
-                if(user.getBirthday().equals(oldUser.getBirthday())){
-                    //Con las comprobaciones hechas, se puede actualizar el usuario:
-                    return Optional.of(users.save(user));
-                    //Si no se cumplen las condiciones, se lanzan excepciones:
-                } else {
-                    throw new InvalidDataException(ErrorType.FORBIDDEN, "You cannot change the birthday info");
-                }
-            } else {
-                throw new NoDataException(ErrorType.UNKNOWN_INFO, "There is no user with that email.");
-            }
-        } else {
+        if(!user.getEmail().equals(id)) {
             throw new InvalidDataException(ErrorType.EXISTING_DATA, "The URI user id and the email don't match");
         }
+        //Existe - Comprobamos que el campo birthday no se haya cambiado y si el usuario existe:
+        User oldUser = users.findById(id).orElseThrow(() ->
+                new NoDataException(ErrorType.UNKNOWN_INFO, "There is no user with that email."));
+        //Comprobamos si las fechas son coincidentes:
+        if(!user.getBirthday().equals(oldUser.getBirthday())) {
+            throw new InvalidDataException(ErrorType.FORBIDDEN, "You cannot change the birthday info");
+        }
+        //Con las comprobaciones hechas, se puede actualizar el usuario:
+        return Optional.of(users.save(user));
     }
 
     /**
@@ -160,33 +153,33 @@ public class UserService {
      */
     public Optional<User> addFriend(String userId, User newFriend) throws InvalidDataException, NoDataException {
         //Comprobamos que el usuario y el amigo no sean la misma persona:
-        if(!userId.equals(newFriend.getEmail())){
-            //Comprobamos que el usuario y el amigo existan en la db:
-            Optional<User> optUser = users.findById(userId);
-            if(optUser.isPresent()) {
-                if(users.existsById(newFriend.getEmail())){
-                    //Recuperamos el usuario:
-                    User user = optUser.get();
-                    //Comprobamos si el array de amigos está vacío (para crearlo):
-                    if(user.getFriends() == null){
-                        user.setFriends(new ArrayList<>());
-                    }
-                    //Comprobamos si el usuario y el posible amigo ya lo son:
-                    if(!user.getFriends().contains(newFriend)){
-                        user.getFriends().add(newFriend);
-                        //Guardamos los cambios y devolvemos el resultado:
-                        return Optional.of(users.save(user));
-                    } else {
-                        throw new InvalidDataException(ErrorType.INVALID_INFO, "Both users already are friends");
-                    }
-                } else {
-                    throw new NoDataException(ErrorType.UNKNOWN_INFO, "Friend cannot be added: user does not exist");
-                }
-            } else {
-                throw new NoDataException(ErrorType.UNKNOWN_INFO, "There is no user with that id");
-            }
-        } else {
+        if(userId.equals(newFriend.getEmail())) {
             throw new InvalidDataException(ErrorType.INVALID_INFO, "An user cannot be friend of himself");
+        }
+
+        //Comprobamos que el usuario y el amigo existan en la db. Usuario:
+        User user = users.findById(userId).orElseThrow(()->
+                new NoDataException(ErrorType.UNKNOWN_INFO, "There is no user with that id"));
+
+        //Comprobación amigo:
+        if(!users.existsById(newFriend.getEmail())) {
+            throw new NoDataException(ErrorType.UNKNOWN_INFO, "Friend cannot be added: user does not exist");
+        }
+
+        //Comprobamos si el array de amigos del usuario está vacío (para crearlo):
+        if(user.getFriends() == null){
+            user.setFriends(new ArrayList<>());
+        }
+
+        //Comprobamos si el usuario y el posible amigo ya lo son:
+        if(!user.getFriends().contains(newFriend)){
+            //Si no lo son, añadimos nuevo amigo:
+            user.getFriends().add(newFriend);
+            //Guardamos los cambios y devolvemos el resultado:
+            return Optional.of(users.save(user));
+        } else {
+            //Si ya lo son, se manda una excepción:
+            throw new InvalidDataException(ErrorType.INVALID_INFO, "Both users already are friends");
         }
     }
 
@@ -201,32 +194,26 @@ public class UserService {
      */
     public Optional<User> deleteFriend(String userId, String friendId) throws InvalidDataException, NoDataException {
         //Comprobamos que el id de usuario sea válido:
-        Optional<User> user = users.findById(userId);
-        if(user.isPresent()){
-            //Comprobamos que exista el amigo:
-            Optional<User> friend = users.findById(friendId);
-            if(friend.isPresent()){
-                //Comprobamos si son amigos:
-                User resultUser = user.get();
-                User friendUser = friend.get();
-                //Comprobamos con el nombre y el mail:
-                if(resultUser.getFriends().contains(new User(friendUser.getEmail(), friendUser.getName(),
-                        null, null, null, null))) {
-                    //Eliminamos el amigo:
-                    resultUser.getFriends().removeIf(user1 -> {
-                        return user1.getEmail().equals(friendUser.getEmail());
-                    });
-                    return Optional.of(users.save(resultUser));
-                    //En caso de no cumplirse las condiciones, se lanzan excepciones:
-                } else {
-                    throw new InvalidDataException(ErrorType.INVALID_INFO, "Both users are not friends");
-                }
-            } else {
-                throw new NoDataException(ErrorType.UNKNOWN_INFO, "Friend does not exists");
+        User resultUser = users.findById(userId).orElseThrow(()->
+                new NoDataException(ErrorType.UNKNOWN_INFO, "User does not exists"));
+
+        //Comprobamos que exista el amigo:
+        User friendUser = users.findById(friendId).orElseThrow(()->
+                new NoDataException(ErrorType.UNKNOWN_INFO, "Friend does not exists"));
+
+        //Comprobamos con el nombre y el mail si los dos usuarios son amigos:
+        //Vamos recorriendo el bucle hasta encontrar una coincidencia de emails entre el de un amigo y el buscado:
+        for(User user: resultUser.getFriends()){
+            if (user.getEmail().equals(friendUser.getEmail())) {
+                //Si lo son, eliminamos el amigo:
+                resultUser.getFriends().remove(user);
+                //Se devuelve el usuario tras los cambios.
+                return Optional.of(users.save(resultUser));
             }
-        } else {
-            throw new NoDataException(ErrorType.UNKNOWN_INFO, "User does not exists");
         }
+
+        //En caso de no cumplirse lo anterior, se lanza una excepción:
+        throw new InvalidDataException(ErrorType.INVALID_INFO, "Both users are not friends");
     }
 
     /**

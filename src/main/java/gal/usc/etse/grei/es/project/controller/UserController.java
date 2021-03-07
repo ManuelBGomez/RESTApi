@@ -3,6 +3,8 @@ package gal.usc.etse.grei.es.project.controller;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.AlreadyCreatedException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoDataException;
+import gal.usc.etse.grei.es.project.model.validation.createValidation;
+import gal.usc.etse.grei.es.project.model.validation.friendValidation;
 import gal.usc.etse.grei.es.project.service.AssessmentService;
 import gal.usc.etse.grei.es.project.utilities.AuxMethods;
 import gal.usc.etse.grei.es.project.utilities.Constants;
@@ -15,9 +17,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
@@ -101,7 +103,7 @@ public class UserController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<Object> create(@Valid @RequestBody User user){
+    ResponseEntity<Object> create(@Validated(createValidation.class) @RequestBody User user){
         try {
             //Se intenta crear el usuario:
             Optional<User> inserted = users.create(user);
@@ -157,7 +159,7 @@ public class UserController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<Object> update(@PathVariable("id") String id, @Valid @RequestBody User user){
+    ResponseEntity<Object> update(@PathVariable("id") String id, @Validated(createValidation.class) @RequestBody User user){
         try {
             //Se intenta hacer la actualización:
             Optional<User> result = users.update(id, user);
@@ -188,7 +190,7 @@ public class UserController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<Object> addFriend(@PathVariable("id") String id, @RequestBody User newFriend){
+    ResponseEntity<Object> addFriend(@PathVariable("id") String id,@Validated(friendValidation.class) @RequestBody User newFriend){
 
         try {
             //Llamamos al método de la clase de usuarios:

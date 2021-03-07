@@ -1,18 +1,19 @@
 package gal.usc.etse.grei.es.project.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import gal.usc.etse.grei.es.project.model.validation.createValidation;
 
-import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.util.Objects;
 import java.util.StringJoiner;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Date {
-    @NotEmpty
+    @NotNull(groups = {createValidation.class}, message = "no birthday day specified")
     private Integer day;
-    @NotEmpty
+    @NotNull(groups = {createValidation.class}, message = "no birthday month specified")
     private Integer month;
-    @NotEmpty
+    @NotNull(groups = {createValidation.class}, message = "no birthday year specified")
     private Integer year;
 
     public Date() {

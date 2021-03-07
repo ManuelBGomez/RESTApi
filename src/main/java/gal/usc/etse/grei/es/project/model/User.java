@@ -1,9 +1,12 @@
 package gal.usc.etse.grei.es.project.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import gal.usc.etse.grei.es.project.model.validation.createValidation;
+import gal.usc.etse.grei.es.project.model.validation.friendValidation;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -15,14 +18,15 @@ import java.util.StringJoiner;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class User {
     @Id
-    @NotEmpty
-    @Email
+    @NotEmpty(groups = {createValidation.class, friendValidation.class}, message = "no email specified")
+    @Email(groups = {createValidation.class, friendValidation.class}, message = "incorrect format")
     private String email;
-    @NotEmpty
+    @NotEmpty(groups = {createValidation.class, friendValidation.class}, message = "no name specified")
     private String name;
     private String country;
     private String picture;
-    @NotNull
+    @Valid
+    @NotNull(groups = {createValidation.class}, message = "no birthday specified")
     private Date birthday;
     private List<User> friends;
 
