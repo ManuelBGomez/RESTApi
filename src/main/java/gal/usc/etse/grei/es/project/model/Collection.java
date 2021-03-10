@@ -7,6 +7,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 
+/**
+ * Clase que representa una colección de recursos.
+ *
+ * Elaborada estructura por los profesores de la materia.
+ */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Collection {
     private String name;

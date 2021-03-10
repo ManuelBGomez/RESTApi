@@ -5,6 +5,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.Objects;
 import java.util.StringJoiner;
 
+/**
+ * Clase que representa a los recursos.
+ *
+ * Elaborada estructura por los profesores de la materia.
+ */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Resource {
     private String url;

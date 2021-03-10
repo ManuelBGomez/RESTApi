@@ -2,6 +2,7 @@ package gal.usc.etse.grei.es.project.controller;
 
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.AlreadyCreatedException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoDataException;
 import gal.usc.etse.grei.es.project.model.validation.createValidation;
 import gal.usc.etse.grei.es.project.model.validation.modifyValidation;
 import gal.usc.etse.grei.es.project.service.AssessmentService;
@@ -156,6 +157,9 @@ public class MovieController {
         } catch (InvalidDataException e) {
             //Si se captura una excepción de datos incorrectos, se ofrece con un estado bad request:
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
+        } catch (NoDataException e){
+            //Si la excepción es NoData (en este caso porque no se encuentra película), se ofrece con un estado not found:
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
         }
     }
 
@@ -178,8 +182,9 @@ public class MovieController {
             movies.delete(id);
             //Se devuelve un estado noContent, dado que no tenemos nada que mostrar:
             return ResponseEntity.noContent().build();
-        } catch (InvalidDataException e) {
+        } catch (NoDataException e) {
             //En caso de no poderse ejecutar el borrado (lanzada excepción), se devuelve error:
+            //Estado not found porque no se encuentra la película:
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
         }
     }
@@ -212,6 +217,9 @@ public class MovieController {
         } catch (AlreadyCreatedException e) {
             //Si ya hay comentario del usuario indicado para la película, se manda estado conflict:
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getErrorObject());
+        } catch (NoDataException e){
+            //Si no existe alguno de los datos, se manda estado NOT FOUND:
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
         }
     }
 
@@ -271,6 +279,9 @@ public class MovieController {
         } catch (InvalidDataException e) {
             //Si se captura una excepción asociada a información incorrecta, se manda un bad request.
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
+        } catch (NoDataException e){
+            //Si no existe alguno de los datos, se manda estado NOT FOUND:
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
         }
     }
 
@@ -298,6 +309,9 @@ public class MovieController {
         } catch (InvalidDataException e) {
             //Se devuelve un error en caso de capturar una excepción:
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
+        } catch (NoDataException e){
+            //Si no existe alguno de los datos, se manda estado NOT FOUND:
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
         }
     }
 }

@@ -14,6 +14,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 
+/**
+ * Clase que representa a los usuarios.
+ *
+ * Elaborada estructura por los profesores de la materia.
+ * Etiquetas sobre los atributos hechas por Manuel Bendaña.
+ */
 @Document(collection = "users")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class User {

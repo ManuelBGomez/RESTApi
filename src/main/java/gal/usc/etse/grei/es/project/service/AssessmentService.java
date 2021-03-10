@@ -3,6 +3,7 @@ package gal.usc.etse.grei.es.project.service;
 import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.AlreadyCreatedException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoDataException;
 import gal.usc.etse.grei.es.project.model.Assessment;
 import gal.usc.etse.grei.es.project.repository.AssessmentRepository;
 import org.springframework.data.domain.Page;
@@ -45,7 +46,8 @@ public class AssessmentService {
      * @throws InvalidDataException Excepción asociada a la introducción de datos incorrectos. En este caso
      *      a una película incorrecta o un usuario inexistente.
      */
-    public Optional<Assessment> addComment(String id, Assessment assessment) throws InvalidDataException, AlreadyCreatedException {
+    public Optional<Assessment> addComment(String id, Assessment assessment)
+            throws InvalidDataException, AlreadyCreatedException, NoDataException {
         //Comprobamos que la película coincide con la pasada por la uri:
         if(!assessment.getMovie().getId().equals(id)) {
             throw new InvalidDataException(ErrorType.INVALID_INFO, "Movie URI id and assesment movie id don't match");
@@ -53,12 +55,12 @@ public class AssessmentService {
 
         //Comprobamos que la película existe:
         if(!movies.existsById(id)){
-            throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "The specified film does not exists");
+            throw new NoDataException(ErrorType.UNKNOWN_INFO, "The specified film does not exists");
         }
 
         //Comprobamos si el usuario existe:
         if(!users.existsById(assessment.getUser().getEmail())){
-            throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "The specified user does not exists");
+            throw new NoDataException(ErrorType.UNKNOWN_INFO, "The specified user does not exists");
         }
 
         //Comprobamos si este usuario ya hizo un comentario de esa película:
@@ -98,7 +100,7 @@ public class AssessmentService {
      * @throws InvalidDataException Excepción lanzada en caso de pasar algún parámetro incorrecto.
      */
     public Optional<Assessment> modifyComment(String movieId, String commentId, Assessment assessment)
-            throws InvalidDataException {
+            throws InvalidDataException, NoDataException {
 
         //Comprobamos que la película coincide con la pasada por la uri:
         if(!assessment.getMovie().getId().equals(movieId)) {
@@ -112,7 +114,7 @@ public class AssessmentService {
 
         //Comprobamos que el comentario existe:
         Assessment oldAssessment = assessments.findById(commentId).orElseThrow(()->
-                new InvalidDataException(ErrorType.UNKNOWN_INFO, "The specified assessment does not exists"));
+                new NoDataException(ErrorType.UNKNOWN_INFO, "The specified assessment does not exists"));
 
         //Comprobamos que la película no cambie:
         if(!oldAssessment.getMovie().getId().equals(assessment.getMovie().getId())){
@@ -120,7 +122,7 @@ public class AssessmentService {
         }
 
         //Comprobamos que el usuario no cambie:
-        if(!users.existsById(assessment.getUser().getEmail())){
+        if(!oldAssessment.getUser().getEmail().equals(assessment.getUser().getEmail())){
             throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "User cannot be changed");
         }
 
@@ -134,15 +136,15 @@ public class AssessmentService {
      * @param commentId El id del comentario a borrar.
      * @throws InvalidDataException Excepción lanzada en caso de haber datos incorrectos.
      */
-    public void deleteComment(String movieId, String commentId) throws InvalidDataException {
+    public void deleteComment(String movieId, String commentId) throws InvalidDataException, NoDataException {
         //Comprobamos existencia de la película, del comentario y su relación:
         if(!movies.existsById(movieId)){
-            throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "The specified film does not exists");
+            throw new NoDataException(ErrorType.UNKNOWN_INFO, "The specified film does not exists");
         }
 
         //Comprobamos que el comentario existe:
         Assessment assessment = assessments.findById(commentId).orElseThrow(()->
-                new InvalidDataException(ErrorType.UNKNOWN_INFO, "The specified assessment does not exists"));
+                new NoDataException(ErrorType.UNKNOWN_INFO, "The specified assessment does not exists"));
 
         //Comprobamos que el comentario está correctamente asociado a la película:
         if(!assessment.getMovie().getId().equals(movieId)){

@@ -1,5 +1,8 @@
 package gal.usc.etse.grei.es.project.model;
 
+/**
+ * Tipo enum Status, representa el estado de una película.
+ */
 public enum Status {
     RUMORED, PLANNED, PRODUCTION, POSTPRODUCTION, RELEASED, CANCELLED;
 

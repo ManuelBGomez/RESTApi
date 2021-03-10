@@ -203,12 +203,15 @@ public class UserService {
 
         //Comprobamos con el nombre y el mail si los dos usuarios son amigos:
         //Vamos recorriendo el bucle hasta encontrar una coincidencia de emails entre el de un amigo y el buscado:
-        for(User user: resultUser.getFriends()){
-            if (user.getEmail().equals(friendUser.getEmail())) {
-                //Si lo son, eliminamos el amigo:
-                resultUser.getFriends().remove(user);
-                //Se devuelve el usuario tras los cambios.
-                return Optional.of(users.save(resultUser));
+        if(resultUser.getFriends() != null) {
+            //Sabiendo que no es null, haremos ese recorrido:
+            for(User user: resultUser.getFriends()){
+                if (user.getEmail().equals(friendUser.getEmail())) {
+                    //Si lo son, eliminamos el amigo:
+                    resultUser.getFriends().remove(user);
+                    //Se devuelve el usuario tras los cambios.
+                    return Optional.of(users.save(resultUser));
+                }
             }
         }
 

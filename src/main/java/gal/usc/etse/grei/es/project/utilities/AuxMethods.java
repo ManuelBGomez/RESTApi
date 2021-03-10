@@ -23,34 +23,15 @@ public class AuxMethods {
      *      poder ordenar correctamente los resultados en base a los criterios pasados.
      */
     public static List<Sort.Order> getSortCriteria(List<String> sort){
-        //Antes de nada, si se indicase un criterio de ordenación por fecha, se consideraria múltiple:
+        //Antes de nada, si se indicase un criterio de ordenación por fecha, se consideraria por los tres campos:
         //Si no hacemos esto, la ordenación sería incorrecta (ordenaría primero por día).
-        if(sort.contains("+releaseDate")){
-            sort.remove("+releaseDate");
-            sort.add("+releaseDate.year");
-            sort.add("+releaseDate.month");
-            sort.add("+releaseDate.day");
-        }
-        if(sort.contains("-releaseDate")){
-            sort.remove("-releaseDate");
-            sort.add("-releaseDate.year");
-            sort.add("-releaseDate.month");
-            sort.add("-releaseDate.day");
-        }
-        if(sort.contains("+birthday")){
-            sort.remove("+birthday");
-            sort.add("+birthday.year");
-            sort.add("+birthday.month");
-            sort.add("+birthday.day");
-        }
-        if(sort.contains("-birthday")){
-            sort.remove("-birthday");
-            sort.add("-birthday.year");
-            sort.add("-birthday.month");
-            sort.add("-birthday.day");
-        }
+        AuxMethods.sortDate(sort, "+releaseDate");
+        AuxMethods.sortDate(sort, "-releaseDate");
+        AuxMethods.sortDate(sort, "+birthday");
+        AuxMethods.sortDate(sort, "-birthday");
+
         //Elaboramos la lista que se devolverá como resultado:
-        List<Sort.Order> criteria = sort.stream().map(string -> {
+        return sort.stream().map(string -> {
             //Para determinar si la ordenación es ascendente o descendente, se considera el símbolo inicial del string.
             if(string.startsWith("+")){
                 //Si es "+", entonces la ordenación es ascendente.
@@ -63,8 +44,23 @@ public class AuxMethods {
         })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+    }
 
-        //Se devuelven finalmente esos criterios:
-        return criteria;
+    /**
+     * Método que permite hacer una ordenación por fecha, cambiando el campo que contiene la fecha
+     * por su descomposición en año, mes y día.
+     * @param sort Lista de criterios de ordenación.
+     * @param nameDate El nombre del criterio que puede suponer una fecha.
+     */
+    public static void sortDate(List<String> sort, String nameDate){
+        //Comprobamos que la lista contenga ese valor:
+        if(sort.contains(nameDate)){
+            //Si lo contiene, se borra:
+            sort.remove(nameDate);
+            //Se añaden tres criterios con el mismo nombre pero terminando en year, month y day:
+            sort.add(nameDate + ".year");
+            sort.add(nameDate + ".month");
+            sort.add(nameDate + ".day");
+        }
     }
 }

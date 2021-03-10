@@ -5,6 +5,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.Objects;
 import java.util.StringJoiner;
 
+/**
+ * Clase que representa a miembros del crew.
+ *
+ * Elaborada estructura por los profesores de la materia.
+ */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Crew extends Person{
     private String job;

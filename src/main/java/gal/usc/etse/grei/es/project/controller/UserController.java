@@ -190,7 +190,8 @@ public class UserController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<Object> addFriend(@PathVariable("id") String id,@Validated(friendValidation.class) @RequestBody User newFriend){
+    ResponseEntity<Object> addFriend(@PathVariable("id") String id,
+                                     @Validated(friendValidation.class) @RequestBody User newFriend){
 
         try {
             //Llamamos al método de la clase de usuarios:

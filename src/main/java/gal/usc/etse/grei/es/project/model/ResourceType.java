@@ -1,5 +1,8 @@
 package gal.usc.etse.grei.es.project.model;
 
+/**
+ * Tipo enumerado que representa el tipo de recurso.
+ */
 public enum ResourceType {
     POSTER,
     BACKDROP,

@@ -7,6 +7,12 @@ import javax.validation.constraints.NotNull;
 import java.util.Objects;
 import java.util.StringJoiner;
 
+/**
+ * Clase que representa una fecha.
+ *
+ * Elaborada estructura por los profesores de la materia.
+ * Etiquetas sobre los atributos hechas por Manuel Bendaña.
+ */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Date {
     @NotNull(groups = {createValidation.class}, message = "no birthday day specified")

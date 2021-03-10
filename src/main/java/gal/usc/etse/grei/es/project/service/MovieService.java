@@ -2,6 +2,7 @@ package gal.usc.etse.grei.es.project.service;
 
 import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoDataException;
 import gal.usc.etse.grei.es.project.model.*;
 import gal.usc.etse.grei.es.project.repository.MovieRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,7 +122,7 @@ public class MovieService {
      * @return La película una vez actualizada en la Base de Datos.
      * @throws InvalidDataException Excepción lanzada en caso de que haya información incorrecta.
      */
-    public Optional<Film> update(String id, Film movie) throws InvalidDataException {
+    public Optional<Film> update(String id, Film movie) throws InvalidDataException, NoDataException {
         //Comprobamos que el id de la película existe:
         if(movies.existsById(id)){
             //Verificamos que el id de la película pasada coincida con el de la URL:
@@ -133,7 +134,7 @@ public class MovieService {
             }
         } else {
             //Si no hay película con el id pasado, se lanza otra excepción:
-            throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "There is no film with the specified id");
+            throw new NoDataException(ErrorType.UNKNOWN_INFO, "There is no film with the specified id");
         }
     }
 
@@ -142,14 +143,14 @@ public class MovieService {
      * @param movieId El identificador de la película a borrar
      * @throws InvalidDataException Excepción lanzada en caso de haber problemas en el borrado.
      */
-    public void delete(String movieId) throws InvalidDataException {
+    public void delete(String movieId) throws NoDataException {
         //Se comprueba si existe la película que se quiere borrar:
         if(movies.existsById(movieId)){
             //Si existe, se borra la película:
             movies.deleteById(movieId);
         } else {
             //Si no, se lanza una excepción indicando que no se ha encontrado película
-            throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "No film found with the specified ID.");
+            throw new NoDataException(ErrorType.UNKNOWN_INFO, "No film found with the specified ID.");
         }
     }
 
