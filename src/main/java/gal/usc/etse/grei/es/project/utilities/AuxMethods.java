@@ -23,6 +23,32 @@ public class AuxMethods {
      *      poder ordenar correctamente los resultados en base a los criterios pasados.
      */
     public static List<Sort.Order> getSortCriteria(List<String> sort){
+        //Antes de nada, si se indicase un criterio de ordenación por fecha, se consideraria múltiple:
+        //Si no hacemos esto, la ordenación sería incorrecta (ordenaría primero por día).
+        if(sort.contains("+releaseDate")){
+            sort.remove("+releaseDate");
+            sort.add("+releaseDate.year");
+            sort.add("+releaseDate.month");
+            sort.add("+releaseDate.day");
+        }
+        if(sort.contains("-releaseDate")){
+            sort.remove("-releaseDate");
+            sort.add("-releaseDate.year");
+            sort.add("-releaseDate.month");
+            sort.add("-releaseDate.day");
+        }
+        if(sort.contains("+birthday")){
+            sort.remove("+birthday");
+            sort.add("+birthday.year");
+            sort.add("+birthday.month");
+            sort.add("+birthday.day");
+        }
+        if(sort.contains("-birthday")){
+            sort.remove("-birthday");
+            sort.add("-birthday.year");
+            sort.add("-birthday.month");
+            sort.add("-birthday.day");
+        }
         //Elaboramos la lista que se devolverá como resultado:
         List<Sort.Order> criteria = sort.stream().map(string -> {
             //Para determinar si la ordenación es ascendente o descendente, se considera el símbolo inicial del string.
