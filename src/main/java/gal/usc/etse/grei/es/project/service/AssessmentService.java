@@ -118,12 +118,12 @@ public class AssessmentService {
 
         //Comprobamos que la película no cambie:
         if(!oldAssessment.getMovie().getId().equals(assessment.getMovie().getId())){
-            throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "Movie cannot be changed");
+            throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "Assessment movie cannot be changed");
         }
 
         //Comprobamos que el usuario no cambie:
         if(!oldAssessment.getUser().getEmail().equals(assessment.getUser().getEmail())){
-            throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "User cannot be changed");
+            throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "Assessment user cannot be changed");
         }
 
         //Si llegamos a este punto, guardamos el comentario actualizado:

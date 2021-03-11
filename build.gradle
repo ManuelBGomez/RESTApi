@@ -19,6 +19,11 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
+bootJar {
+    classifier = 'boot'
+}
+
+
 test {
     useJUnitPlatform()
 }
