@@ -1,10 +1,13 @@
 package gal.usc.etse.grei.es.project.service;
 
 import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.ForbiddenActionException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidFormatException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoDataException;
 import gal.usc.etse.grei.es.project.model.*;
 import gal.usc.etse.grei.es.project.repository.MovieRepository;
+import gal.usc.etse.grei.es.project.utilities.PatchUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -14,6 +17,7 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -26,16 +30,20 @@ public class MovieService {
     //Referencias a las interfaces repository que necesitamos en esta clase:
     private final MovieRepository movies;
     private final MongoTemplate mongoTemplate;
+    //Referencia a la clase auxiliar PatchUtils:
+    private final PatchUtils patchUtils;
 
     /**
      * Constructor de la clase
      * @param movies Referencia al MovieRepository
      * @param mongoTemplate Referencia a MongoTemplate, para la consulta de películas.
+     * @param patchUtils Objeto de la clase PatchUtils, para usar en la gestión de peticiones PATCH.
      */
     @Autowired
-    public MovieService(MovieRepository movies, MongoTemplate mongoTemplate) {
+    public MovieService(MovieRepository movies, MongoTemplate mongoTemplate, PatchUtils patchUtils) {
         this.movies = movies;
         this.mongoTemplate = mongoTemplate;
+        this.patchUtils = patchUtils;
     }
 
     /**
@@ -115,33 +123,41 @@ public class MovieService {
         }
     }
 
+
     /**
      * Método que permite actualizar los datos de una película.
      * @param id El identificador de la película en cuestión.
-     * @param movie Los datos de la película para actualizar
+     * @param updates Las modificaciones a realizar.
      * @return La película una vez actualizada en la Base de Datos.
      * @throws InvalidDataException Excepción lanzada en caso de que haya información incorrecta.
+     * @throws NoDataException Excepción lanzada en caso de que no se encuentre película con el id.
+     * @throws InvalidFormatException Excepción lanzada en caso de que pasar modificaciones en formato erróneo.
      */
-    public Optional<Film> update(String id, Film movie) throws InvalidDataException, NoDataException {
-        //Comprobamos que el id de la película existe:
-        if(movies.existsById(id)){
-            //Verificamos que el id de la película pasada coincida con el de la URL:
-            if(movie.getId() != null && movie.getId().equals(id)){
-                return Optional.of(movies.save(movie));
-            } else {
-                //Si no coinciden los IDs, se lanza una excepción:
-                throw new InvalidDataException(ErrorType.INVALID_INFO, "URI movie ID and provided movie ID don't match");
+    public Optional<Film> update(String id, List<Map<String, Object>> updates)
+            throws InvalidDataException, NoDataException, InvalidFormatException, ForbiddenActionException {
+        for (Map<String, Object> update : updates) {
+            //Comprobamos que el formato de la petición patch sea correcto:
+            if (update.get("op") == null || update.get("path") == null || update.get("value") == null) {
+                throw new InvalidDataException(ErrorType.INVALID_INFO, "You must specify operation, path and value in every update.");
             }
-        } else {
-            //Si no hay película con el id pasado, se lanza otra excepción:
-            throw new NoDataException(ErrorType.UNKNOWN_INFO, "There is no film with the specified id");
+            //Comprobamos que no se modifique el id:
+            if(update.get("path").equals("/id")){
+                throw new ForbiddenActionException(ErrorType.FORBIDDEN, "You cannot change the comment's id");
+            }
         }
+
+        //Se recupera la película:
+        Film film = movies.findById(id).orElseThrow(()->new NoDataException(ErrorType.UNKNOWN_INFO,
+                "No film with the specified id"));
+
+        //Se intenta aplicar la actualización y devolvemos el resultado:
+        return Optional.of(movies.save(patchUtils.patch(film, updates)));
     }
 
     /**
      * Método que permite borrar la película con el id especificado.
      * @param movieId El identificador de la película a borrar
-     * @throws InvalidDataException Excepción lanzada en caso de haber problemas en el borrado.
+     * @throws NoDataException Excepción lanzada en caso de haber problemas en el borrado.
      */
     public void delete(String movieId) throws NoDataException {
         //Se comprueba si existe la película que se quiere borrar:

@@ -1,16 +1,18 @@
 package gal.usc.etse.grei.es.project.service;
 
+import com.github.fge.jsonpatch.JsonPatchException;
 import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
-import gal.usc.etse.grei.es.project.errorManagement.exceptions.AlreadyCreatedException;
-import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
-import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoDataException;
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.*;
 import gal.usc.etse.grei.es.project.model.User;
 import gal.usc.etse.grei.es.project.repository.UserRepository;
+import gal.usc.etse.grei.es.project.utilities.PatchUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -22,15 +24,19 @@ import java.util.Optional;
 public class UserService {
     //Referencias a las interfaces repository que necesitamos:
     private final UserRepository users;
+    //Referencia a la clase auxiliar PatchUtils:
+    private final PatchUtils patchUtils;
 
     /**
      * Constructor de la clase
      *
      * @param users Referencia al repositorio de usuarios.
+     * @param patchUtils Objeto de la clase PatchUtils, para usar en la gestión de peticiones PATCH.
      */
     @Autowired
-    public UserService(UserRepository users){
+    public UserService(UserRepository users, PatchUtils patchUtils){
         this.users = users;
+        this.patchUtils = patchUtils;
     }
 
     /**
@@ -121,25 +127,35 @@ public class UserService {
      * Método que permite actualizar los datos de un usuario
      *
      * @param id El identificador del usuario a actualizar.
-     * @param user Todos los datos del usuario
+     * @param updates Actualizaciones a realizar.
      * @return Los datos modificados, ya guardados en la base de datos.
      * @throws InvalidDataException Excepción lanzada si hay algo incorrecto.
      * @throws NoDataException Excepción lanzada si no se encuentra al usuario.
+     * @throws ForbiddenActionException Excepción lanzada en caso de que haya una acción prohibida efectuada.
+     * @throws InvalidFormatException Excepción lanzada si se pasa información en un formato incorrecto.
      */
-    public Optional<User> update(String id, User user) throws InvalidDataException, NoDataException {
-        //Empezamos comprobando que los ids coincidan:
-        if(!user.getEmail().equals(id)) {
-            throw new InvalidDataException(ErrorType.EXISTING_DATA, "The URI user id and the email don't match");
+    public Optional<User> update(String id, List<Map<String, Object>> updates)
+            throws InvalidDataException, NoDataException, InvalidFormatException, ForbiddenActionException {
+        //Comprobamos que ninguna operación afecte al parámetro email o birthday:
+        for (Map<String, Object> update : updates) {
+            //Comprobamos también que el formato sea correcto:
+            if(update.get("op") == null || update.get("path") == null || update.get("value") == null){
+                throw new InvalidDataException(ErrorType.INVALID_INFO, "You must specify operation, path and value");
+            }
+            if(update.get("path").equals("/email")){
+                throw new ForbiddenActionException(ErrorType.FORBIDDEN, "You cannot change the email of the user");
+            }
+            if(update.get("path").equals("/birthday")) {
+                throw new ForbiddenActionException(ErrorType.FORBIDDEN, "You cannot change the user's birthday");
+            }
         }
-        //Existe - Comprobamos que el campo birthday no se haya cambiado y si el usuario existe:
-        User oldUser = users.findById(id).orElseThrow(() ->
-                new NoDataException(ErrorType.UNKNOWN_INFO, "There is no user with that email."));
-        //Comprobamos si las fechas son coincidentes:
-        if(!user.getBirthday().equals(oldUser.getBirthday())) {
-            throw new InvalidDataException(ErrorType.FORBIDDEN, "You cannot change the birthday info");
-        }
-        //Con las comprobaciones hechas, se puede actualizar el usuario:
-        return Optional.of(users.save(user));
+
+        //Hecho esto, recuperamos el usuario con el id pasado (si existe):
+        User user = users.findById(id).orElseThrow(()->new NoDataException(ErrorType.UNKNOWN_INFO,
+                "No user with the specified email"));
+
+        //Aplicamos patch y guardamos el resultado:
+        return Optional.of(users.save(patchUtils.patch(user, updates)));
     }
 
     /**

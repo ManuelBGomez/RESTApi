@@ -1,8 +1,6 @@
 package gal.usc.etse.grei.es.project.controller;
 
-import gal.usc.etse.grei.es.project.errorManagement.exceptions.AlreadyCreatedException;
-import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
-import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoDataException;
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.*;
 import gal.usc.etse.grei.es.project.model.validation.createValidation;
 import gal.usc.etse.grei.es.project.model.validation.friendValidation;
 import gal.usc.etse.grei.es.project.service.AssessmentService;
@@ -22,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -144,34 +143,40 @@ public class UserController {
     }
 
     /**
-     * Método: PUT
+     * Método: PATCH
      * Url para llegar: /users/{id}
      * Objetivo: actualizar los datos del usuario con el id facilitado. No se podrá actualizar ni el mail ni la fecha de
      *          nacimiento.
      *
      * @param id El id del usuario cuyos demás datos se quieren actualizar.
-     * @param user Los datos del usuario a modificar.
+     * @param updates Las actualizaciones que se deben realizar.
      * @return estado correcto en caso de encontrar al usuario y haberlo actualizado. Si no, se devolverá algún estado
      *          de error.
      */
-    @PutMapping(
+    @PatchMapping(
             path = "{id}",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<Object> update(@PathVariable("id") String id, @Validated(createValidation.class) @RequestBody User user){
+    ResponseEntity<Object> update(@PathVariable("id") String id, @RequestBody List<Map<String, Object>> updates){
         try {
-            //Se intenta hacer la actualización:
-            Optional<User> result = users.update(id, user);
-            //Si es correcta, se devuelve estado ok con los datos actualizados:
-            return ResponseEntity.ok(result.get());
-            //Si se reciben excepciones, se devuelven los estados que se consideran apropiados:
+            //Intentamos hacer la actualización:
+            Optional<User> result = users.update(id, updates);
+            //Se devuelve un estado ok si se ha ejecutado correctamente:
+            return ResponseEntity.ok().body(result.get());
+            //Si hay problemas, se devuelven excepciones adecuadas a cada situación:
         } catch (InvalidDataException e) {
-            //Para datos inválidos, un BAD REQUEST:
+            //Como se lanza cuando hay algún problema de información incorrecta, se manda un bad request:
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
+        } catch (ForbiddenActionException e) {
+            //Como se lanza en caso de hacer algo prohibido (intentar actualizar el email o el cumpleaños), Forbidden:
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getErrorObject());
         } catch (NoDataException e) {
-            //Para inexistencia de algún dato, un NOT FOUND:
+            //Como se lanza en caso de no encontrar al usuario, Not Found:
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
+        } catch (InvalidFormatException e){
+            //Como se lanza en caso de no poder procesar correctamente las actualizaciones pedidas, Unprocessable entity:
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(e.getErrorObject());
         }
     }
 

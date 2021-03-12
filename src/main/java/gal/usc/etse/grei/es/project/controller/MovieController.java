@@ -1,8 +1,7 @@
 package gal.usc.etse.grei.es.project.controller;
 
-import gal.usc.etse.grei.es.project.errorManagement.exceptions.AlreadyCreatedException;
-import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
-import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoDataException;
+import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.*;
 import gal.usc.etse.grei.es.project.model.validation.createValidation;
 import gal.usc.etse.grei.es.project.model.validation.modifyValidation;
 import gal.usc.etse.grei.es.project.service.AssessmentService;
@@ -23,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -134,32 +134,38 @@ public class MovieController {
 
     }
 
+
     /**
-     * Método: PUT
+     * Método: PATCH
      * Url para llegar: /movies/{id}
      * Objetivo: actualizar la película con el id pasado por url, y con los datos facilitados como parámetro.
      *
      * @param id El id de la película a actualizar
-     * @param movie Datos de la película
+     * @param updates Datos a actualizar
      * @return Si la actualización se ha podido llevar a cabo, los datos de la película modificados.
      */
-    @PutMapping(
+    @PatchMapping(
             path = "{id}",
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<Object> update(@PathVariable("id") String id, @Valid @RequestBody Film movie){
-        try {
-            Optional<Film> updated = movies.update(id, movie);
-            //Si se actualiza la película, se devuelve un estado OK:
-            //En el cuerpo del mensaje irán los datos de la película.
-            return ResponseEntity.ok(updated.get());
-        } catch (InvalidDataException e) {
-            //Si se captura una excepción de datos incorrectos, se ofrece con un estado bad request:
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
-        } catch (NoDataException e){
-            //Si la excepción es NoData (en este caso porque no se encuentra película), se ofrece con un estado not found:
+    ResponseEntity<Object> update(@PathVariable("id") String id, @RequestBody List<Map<String, Object>> updates) {
+        try{
+            //Se intenta hacer la actualización y se devuelve el resultado:
+            return ResponseEntity.ok().body(movies.update(id, updates).get());
+            //Si no se puede, se gestionan las excepciones recibidas:
+        } catch (InvalidFormatException e) {
+            //Como se lanza en caso de no poder procesar correctamente las actualizaciones pedidas, Unprocessable entity:
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(e.getErrorObject());
+        } catch (NoDataException e) {
+            //Como se lanza en caso de no encontrar al usuario, Not Found:
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
+        } catch (InvalidDataException e) {
+            //Como se lanza cuando hay algún problema de información incorrecta, se manda un bad request:
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
+        } catch (ForbiddenActionException e) {
+            //Si se realiza una acción a priori prohibida se manda un forbbiden:
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getErrorObject());
         }
     }
 
@@ -251,37 +257,40 @@ public class MovieController {
         return ResponseEntity.of(assessments.getComments(page, size, Sort.by(criteria), id));
     }
 
+
     /**
-     * Método: PUT
+     * Método: PATCH
      * Url para llegar: /movies/{id}/comments/{commentId}
      * Objetivo: modificar el comentario cuyo id se indica en la URL, de la película cuyo id también
      *      se indica por esa vía.
      *
-     * @param movieId El identificador de la película de la que se quiere modificar un comentario.
+     * @param id El identificador de la película de la que se quiere modificar un comentario.
      * @param commentId El identificador del comentario que se quiere modificar.
-     * @param assessment El comentario a modificar.
+     * @param updates El comentario a modificar.
      * @return El comentario modificado, tal y como ha quedado almacenado.
      */
-    @PutMapping(
+    @PatchMapping(
             path = "{id}/comments/{commentId}",
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
-    )
-    ResponseEntity<Object> modifyComment(@PathVariable("id") String movieId,
-                                             @PathVariable("commentId") String commentId,
-                                             @Validated(modifyValidation.class) @RequestBody Assessment assessment){
-        try {
-            //Se trata de modificar el comentario:
-            Optional<Assessment> result = assessments.modifyComment(movieId,commentId,assessment);
-            //En caso de ejecución incorrecta, se da por hecho que la modificación se completó, se devuelve por ello
-            //un estado correcto.
-            return ResponseEntity.ok(result.get());
-        } catch (InvalidDataException e) {
-            //Si se captura una excepción asociada a información incorrecta, se manda un bad request.
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
-        } catch (NoDataException e){
-            //Si no existe alguno de los datos, se manda estado NOT FOUND:
+    ) ResponseEntity<Object> modifyComment(@PathVariable("id") String id, @PathVariable("commentId") String commentId,
+                                           @RequestBody List<Map<String, Object>> updates){
+        try{
+            //Se intenta hacer la actualización y se devuelve el resultado:
+            return ResponseEntity.ok().body(assessments.modifyComment(id, commentId, updates).get());
+            //Si no se puede, se gestionan las excepciones recibidas:
+        } catch (InvalidFormatException e) {
+            //Como se lanza en caso de no poder procesar correctamente las actualizaciones pedidas, Unprocessable entity:
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(e.getErrorObject());
+        } catch (NoDataException e) {
+            //Como se lanza en caso de no encontrar al usuario, Not Found:
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
+        } catch (InvalidDataException e) {
+            //Como se lanza cuando hay algún problema de información incorrecta, se manda un bad request:
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
+        } catch (ForbiddenActionException e) {
+            //Si se realiza una acción a priori prohibida se manda un forbbiden:
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getErrorObject());
         }
     }
 

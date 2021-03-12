@@ -1,17 +1,18 @@
 package gal.usc.etse.grei.es.project.service;
 
 import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
-import gal.usc.etse.grei.es.project.errorManagement.exceptions.AlreadyCreatedException;
-import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
-import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoDataException;
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.*;
 import gal.usc.etse.grei.es.project.model.Assessment;
 import gal.usc.etse.grei.es.project.repository.AssessmentRepository;
+import gal.usc.etse.grei.es.project.utilities.PatchUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -26,17 +27,22 @@ public class AssessmentService {
     //Referencias a clases service auxiliares:
     private final MovieService movies;
     private final UserService users;
+    //Referencia a la clase auxiliar PatchUtils:
+    private final PatchUtils patchUtils;
 
     /**
      * Constructor de la clase
      * @param assessments Referencia al repositorio de comentarios
+     * @param movies Referencia al servicio de películas
+     * @param users Referencia al servicio de usuarios
+     * @param patchUtils Objeto de la clase PatchUtils, para usar en la gestión de peticiones PATCH
      */
-    public AssessmentService(AssessmentRepository assessments, MovieService movies, UserService users){
+    public AssessmentService(AssessmentRepository assessments, MovieService movies, UserService users, PatchUtils patchUtils){
         this.assessments = assessments;
         this.movies = movies;
         this.users = users;
+        this.patchUtils = patchUtils;
     }
-
 
     /**
      * Método que permite añadir un comentario a la película con el id especificado.
@@ -95,39 +101,43 @@ public class AssessmentService {
      *
      * @param movieId Identificador de la película de la que se quiere modificar un comentario.
      * @param commentId Identificador del comentario a modificar.
-     * @param assessment Datos del comentario.
+     * @param updates Datos a cambiar del comentario.
      * @return El comentario modificado.
      * @throws InvalidDataException Excepción lanzada en caso de pasar algún parámetro incorrecto.
+     * @throws ForbiddenActionException Excepción lanzada por ejecutar alguna acción no permitida.
+     * @throws NoDataException Excepción lanzada por no encontrarse algún dato (en este caso el comentario).
+     * @throws InvalidFormatException Excepción lanzada por no pasar los datos a cambiar en el formato adecuado.
      */
-    public Optional<Assessment> modifyComment(String movieId, String commentId, Assessment assessment)
-            throws InvalidDataException, NoDataException {
-
-        //Comprobamos que la película coincide con la pasada por la uri:
-        if(!assessment.getMovie().getId().equals(movieId)) {
-            throw new InvalidDataException(ErrorType.INVALID_INFO, "Movie URI id and assesment movie id don't match");
+    public Optional<Assessment> modifyComment(String movieId, String commentId, List<Map<String, Object>> updates) throws InvalidDataException, ForbiddenActionException, NoDataException, InvalidFormatException {
+        //Validamos la petición realizada:
+        for (Map<String, Object> update : updates) {
+            //Comprobamos que el formato de la petición patch sea correcto:
+            if (update.get("op") == null || update.get("path") == null || update.get("value") == null) {
+                throw new InvalidDataException(ErrorType.INVALID_INFO, "You must specify operation, path and value in every update.");
+            }
+            //Comprobamos que no se intente modificar ni el id, ni el usuario ni la película:
+            if(update.get("path").equals("/user")){
+                throw new ForbiddenActionException(ErrorType.FORBIDDEN, "You cannot change user of the comment");
+            }
+            if(update.get("path").equals("/movie")){
+                throw new ForbiddenActionException(ErrorType.FORBIDDEN, "You cannot change the comment's film");
+            }
+            if(update.get("path").equals("/id")){
+                throw new ForbiddenActionException(ErrorType.FORBIDDEN, "You cannot change the comment's id");
+            }
         }
 
-        //Lo mismo para los IDs de los comentarios:
-        if(!assessment.getId().equals(commentId)) {
-            throw new InvalidDataException(ErrorType.INVALID_INFO, "Assessment URI id and assesment id don't match");
+        //Comprobamos que existe el comentario y que esté asociado a la película correcta:
+        Assessment assessment = assessments.findById(commentId).orElseThrow(()->new NoDataException(ErrorType.UNKNOWN_INFO,
+                "No assessment with the specified id"));
+
+        if(assessment.getMovie()!=null && assessment.getMovie().getId().equals(movieId)){
+            //Aplicamos modificaciones y actualizamos:
+            return Optional.of(assessments.save(patchUtils.patch(assessment, updates)));
+        } else {
+            //Si no está asociado el comentario a la película de la URI se avisa de ello con una excepción:
+            throw new InvalidDataException(ErrorType.INVALID_INFO, "Movie URI id and assessment movie id don't match");
         }
-
-        //Comprobamos que el comentario existe:
-        Assessment oldAssessment = assessments.findById(commentId).orElseThrow(()->
-                new NoDataException(ErrorType.UNKNOWN_INFO, "The specified assessment does not exists"));
-
-        //Comprobamos que la película no cambie:
-        if(!oldAssessment.getMovie().getId().equals(assessment.getMovie().getId())){
-            throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "Assessment movie cannot be changed");
-        }
-
-        //Comprobamos que el usuario no cambie:
-        if(!oldAssessment.getUser().getEmail().equals(assessment.getUser().getEmail())){
-            throw new InvalidDataException(ErrorType.UNKNOWN_INFO, "Assessment user cannot be changed");
-        }
-
-        //Si llegamos a este punto, guardamos el comentario actualizado:
-        return Optional.of(assessments.save(assessment));
     }
 
     /**
