@@ -103,16 +103,11 @@ public class UserController {
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<Object> create(@Validated(createValidation.class) @RequestBody User user){
-        try {
-            //Se intenta crear el usuario:
-            Optional<User> inserted = users.create(user);
-            //Se devuelve un estado creado, con la URI con la que se puede acceder a él:
-            return ResponseEntity.created(URI.create(Constants.URL + "/users/" + inserted.get().getEmail()))
-                    .body(inserted.get());
-        } catch (AlreadyCreatedException e) {
-            //Si se captura la excepción que el método puede lanzar, se envía un estado de error:
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getErrorObject());
-        }
+        //Se intenta crear el usuario:
+        Optional<User> inserted = users.create(user);
+        //Se devuelve un estado creado, con la URI con la que se puede acceder a él:
+        return ResponseEntity.created(URI.create(Constants.URL + "/users/" + inserted.get().getEmail()))
+                .body(inserted.get());
     }
 
     /**
@@ -131,15 +126,10 @@ public class UserController {
     ResponseEntity<Object> delete(
                 @PathVariable("id") String id
             ) {
-        try {
-            //Se intenta borrar el usuario:
-            users.delete(id);
-            //Si se consigue, se devuelve un estado noContent (no hay nada que devolver):
-            return ResponseEntity.noContent().build();
-        } catch (NoDataException e) {
-            //Si salta la excepción, entonces se devuelve un not found (no se encuentra el usuario a borrar):
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
-        }
+        //Se intenta borrar el usuario:
+        users.delete(id);
+        //Si se consigue, se devuelve un estado noContent (no hay nada que devolver):
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -159,25 +149,10 @@ public class UserController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<Object> update(@PathVariable("id") String id, @RequestBody List<Map<String, Object>> updates){
-        try {
-            //Intentamos hacer la actualización:
-            Optional<User> result = users.update(id, updates);
-            //Se devuelve un estado ok si se ha ejecutado correctamente:
-            return ResponseEntity.ok().body(result.get());
-            //Si hay problemas, se devuelven excepciones adecuadas a cada situación:
-        } catch (InvalidDataException e) {
-            //Como se lanza cuando hay algún problema de información incorrecta, se manda un bad request:
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
-        } catch (ForbiddenActionException e) {
-            //Como se lanza en caso de hacer algo prohibido (intentar actualizar el email o el cumpleaños), Forbidden:
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getErrorObject());
-        } catch (NoDataException e) {
-            //Como se lanza en caso de no encontrar al usuario, Not Found:
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
-        } catch (InvalidFormatException e){
-            //Como se lanza en caso de no poder procesar correctamente las actualizaciones pedidas, Unprocessable entity:
-            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(e.getErrorObject());
-        }
+        //Intentamos hacer la actualización:
+        Optional<User> result = users.update(id, updates);
+        //Se devuelve un estado ok si se ha ejecutado correctamente:
+        return ResponseEntity.ok().body(result.get());
     }
 
     /**
@@ -197,18 +172,10 @@ public class UserController {
     )
     ResponseEntity<Object> addFriend(@PathVariable("id") String id,
                                      @Validated(friendValidation.class) @RequestBody User newFriend){
-
-        try {
             //Llamamos al método de la clase de usuarios:
             Optional<User> result = users.addFriend(id, newFriend);
             //Devovlemos respuesta ok con los datos si ha ido bien la ejecución:
             return ResponseEntity.ok(result.get());
-            //Si se capturan excepciones, se devuelven estados erróneos (bad request o not found):
-        } catch (InvalidDataException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
-        } catch (NoDataException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
-        }
     }
 
     /**
@@ -226,17 +193,9 @@ public class UserController {
     )
     ResponseEntity<Object> deleteFriend(@PathVariable("id") String id,
                                       @PathVariable("idFriend") String idFriend){
-
-        try {
-            //Se intenta hacer el borrado:
-            Optional<User> result = users.deleteFriend(id, idFriend);
-            return ResponseEntity.ok(result.get());
-            //Si se capturan excepciones, se devuelven estados erróneos (bad request o not found):
-        } catch (InvalidDataException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
-        } catch (NoDataException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
-        }
+        //Se intenta hacer el borrado:
+        Optional<User> result = users.deleteFriend(id, idFriend);
+        return ResponseEntity.ok(result.get());
     }
 
     /**

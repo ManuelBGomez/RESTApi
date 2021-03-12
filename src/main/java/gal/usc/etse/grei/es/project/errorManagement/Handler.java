@@ -1,9 +1,11 @@
 package gal.usc.etse.grei.es.project.errorManagement;
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import java.util.ArrayList;
@@ -15,7 +17,7 @@ import java.util.List;
  *
  * @author Manuel Bendaña
  */
-@ControllerAdvice
+@RestControllerAdvice
 public class Handler extends ResponseEntityExceptionHandler {
 
     /**
@@ -43,5 +45,55 @@ public class Handler extends ResponseEntityExceptionHandler {
         //se ofrezca, el cual contiene en este caso la lista de errores.
         return handleExceptionInternal(ex, new ErrorObject(ErrorType.INVALID_PARAMETER,
                         "There was an error on the request data", errorList), headers, status, request);
+    }
+
+    /**
+     * Manejador de la excepción AlreadyCreatedException
+     * @param exception La excepción lanzada
+     * @return Un estado de error conflict.
+     */
+    @ExceptionHandler(AlreadyCreatedException.class)
+    public ResponseEntity<ErrorObject> handle(AlreadyCreatedException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(exception.getErrorObject());
+    }
+
+    /**
+     * Manejador de la excepción ForbiddenActionException
+     * @param exception La excepción lanzada.
+     * @return Un estado de error Forbidden.
+     */
+    @ExceptionHandler(ForbiddenActionException.class)
+    public ResponseEntity<ErrorObject> handle(ForbiddenActionException exception){
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(exception.getErrorObject());
+    }
+
+    /**
+     * Manejador de la excepción InvalidDataException
+     * @param exception La excepción lanzada.
+     * @return Un estado de error Bad Request.
+     */
+    @ExceptionHandler(InvalidDataException.class)
+    public ResponseEntity<ErrorObject> handle(InvalidDataException exception){
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getErrorObject());
+    }
+
+    /**
+     * Manejador de la excepción InvalidFormatException
+     * @param exception La excepción lanzada
+     * @return Un estado de error Unprocessable Entity
+     */
+    @ExceptionHandler(InvalidFormatException.class)
+    public ResponseEntity<ErrorObject> handle(InvalidFormatException exception){
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(exception.getErrorObject());
+    }
+
+    /**
+     * Manejador de la excepción NoDataException
+     * @param exception La excepción lanzada
+     * @return Un estado de error Not Found
+     */
+    @ExceptionHandler(NoDataException.class)
+    public ResponseEntity<ErrorObject> handle(NoDataException exception){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getErrorObject());
     }
 }

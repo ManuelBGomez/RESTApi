@@ -121,17 +121,11 @@ public class MovieController {
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<Object> create(@Valid @RequestBody Film movie) {
-        try {
-            //Tratamos de crear la película:
-            Optional<Film> inserted = movies.create(movie);
-            //Si se crea correctamente, devolvemos la información de la película creada.
-            return ResponseEntity.created(URI.create(Constants.URL + "/movies/" + inserted.get().getId()))
-                    .body(inserted.get());
-        } catch (InvalidDataException e) {
-            //Si se captura la excepción de datos inválidos, se devuelve una bad request.
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
-        }
-
+        //Tratamos de crear la película:
+        Optional<Film> inserted = movies.create(movie);
+        //Si se crea correctamente, devolvemos la información de la película creada.
+        return ResponseEntity.created(URI.create(Constants.URL + "/movies/" + inserted.get().getId()))
+                .body(inserted.get());
     }
 
 
@@ -150,23 +144,8 @@ public class MovieController {
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<Object> update(@PathVariable("id") String id, @RequestBody List<Map<String, Object>> updates) {
-        try{
-            //Se intenta hacer la actualización y se devuelve el resultado:
-            return ResponseEntity.ok().body(movies.update(id, updates).get());
-            //Si no se puede, se gestionan las excepciones recibidas:
-        } catch (InvalidFormatException e) {
-            //Como se lanza en caso de no poder procesar correctamente las actualizaciones pedidas, Unprocessable entity:
-            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(e.getErrorObject());
-        } catch (NoDataException e) {
-            //Como se lanza en caso de no encontrar al usuario, Not Found:
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
-        } catch (InvalidDataException e) {
-            //Como se lanza cuando hay algún problema de información incorrecta, se manda un bad request:
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
-        } catch (ForbiddenActionException e) {
-            //Si se realiza una acción a priori prohibida se manda un forbbiden:
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getErrorObject());
-        }
+        //Se intenta hacer la actualización y se devuelve el resultado:
+        return ResponseEntity.ok().body(movies.update(id, updates).get());
     }
 
     /**
@@ -183,16 +162,10 @@ public class MovieController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     ResponseEntity<Object> delete(@PathVariable("id") String id){
-        try {
-            //Se trata de borrar la película con el id especificado:
-            movies.delete(id);
-            //Se devuelve un estado noContent, dado que no tenemos nada que mostrar:
-            return ResponseEntity.noContent().build();
-        } catch (NoDataException e) {
-            //En caso de no poderse ejecutar el borrado (lanzada excepción), se devuelve error:
-            //Estado not found porque no se encuentra la película:
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
-        }
+        //Se trata de borrar la película con el id especificado:
+        movies.delete(id);
+        //Se devuelve un estado noContent, dado que no tenemos nada que mostrar:
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -211,22 +184,11 @@ public class MovieController {
     )
     ResponseEntity<Object> addComment(@PathVariable("id") String id,
                                            @RequestBody @Validated(createValidation.class) Assessment assessment){
-        try {
-            //Intentamos añadir el comentario:
-            Optional<Assessment> comment = assessments.addComment(id, assessment);
-            //Devolvemos un estado Created con los datos del comentario añadido:
-            return ResponseEntity.created(URI.create(Constants.URL + "/movies/" +
-                    assessment.getMovie().getId() + "/comments/" + assessment.getId())).body(comment.get());
-        } catch (InvalidDataException e) {
-            //Si se captura exepción, se manda un estado BAD REQUEST:
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
-        } catch (AlreadyCreatedException e) {
-            //Si ya hay comentario del usuario indicado para la película, se manda estado conflict:
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getErrorObject());
-        } catch (NoDataException e){
-            //Si no existe alguno de los datos, se manda estado NOT FOUND:
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
-        }
+        //Intentamos añadir el comentario:
+        Optional<Assessment> comment = assessments.addComment(id, assessment);
+        //Devolvemos un estado Created con los datos del comentario añadido:
+        return ResponseEntity.created(URI.create(Constants.URL + "/movies/" +
+                assessment.getMovie().getId() + "/comments/" + assessment.getId())).body(comment.get());
     }
 
     /**
@@ -275,23 +237,8 @@ public class MovieController {
             consumes = MediaType.APPLICATION_JSON_VALUE
     ) ResponseEntity<Object> modifyComment(@PathVariable("id") String id, @PathVariable("commentId") String commentId,
                                            @RequestBody List<Map<String, Object>> updates){
-        try{
-            //Se intenta hacer la actualización y se devuelve el resultado:
-            return ResponseEntity.ok().body(assessments.modifyComment(id, commentId, updates).get());
-            //Si no se puede, se gestionan las excepciones recibidas:
-        } catch (InvalidFormatException e) {
-            //Como se lanza en caso de no poder procesar correctamente las actualizaciones pedidas, Unprocessable entity:
-            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(e.getErrorObject());
-        } catch (NoDataException e) {
-            //Como se lanza en caso de no encontrar al usuario, Not Found:
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
-        } catch (InvalidDataException e) {
-            //Como se lanza cuando hay algún problema de información incorrecta, se manda un bad request:
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
-        } catch (ForbiddenActionException e) {
-            //Si se realiza una acción a priori prohibida se manda un forbbiden:
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getErrorObject());
-        }
+        //Se intenta hacer la actualización y se devuelve el resultado:
+        return ResponseEntity.ok().body(assessments.modifyComment(id, commentId, updates).get());
     }
 
     /**
@@ -310,17 +257,9 @@ public class MovieController {
     )
     ResponseEntity<Object> deleteComment(@PathVariable("id") String movieId,
                                  @PathVariable("commentId") String commentId){
-        try {
-            //Se intenta borrar la película
-            assessments.deleteComment(movieId, commentId);
-            //Se devuelve una respuesta correcta vacía (si se llega a este punto se pudo ejecutar el borrado):
-            return ResponseEntity.noContent().build();
-        } catch (InvalidDataException e) {
-            //Se devuelve un error en caso de capturar una excepción:
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrorObject());
-        } catch (NoDataException e){
-            //Si no existe alguno de los datos, se manda estado NOT FOUND:
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getErrorObject());
-        }
+        //Se intenta borrar la película
+        assessments.deleteComment(movieId, commentId);
+        //Se devuelve una respuesta correcta vacía (si se llega a este punto se pudo ejecutar el borrado):
+        return ResponseEntity.noContent().build();
     }
 }

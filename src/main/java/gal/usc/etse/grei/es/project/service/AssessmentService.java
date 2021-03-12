@@ -108,7 +108,8 @@ public class AssessmentService {
      * @throws NoDataException Excepción lanzada por no encontrarse algún dato (en este caso el comentario).
      * @throws InvalidFormatException Excepción lanzada por no pasar los datos a cambiar en el formato adecuado.
      */
-    public Optional<Assessment> modifyComment(String movieId, String commentId, List<Map<String, Object>> updates) throws InvalidDataException, ForbiddenActionException, NoDataException, InvalidFormatException {
+    public Optional<Assessment> modifyComment(String movieId, String commentId, List<Map<String, Object>> updates)
+            throws InvalidDataException, ForbiddenActionException, NoDataException, InvalidFormatException {
         //Validamos la petición realizada:
         for (Map<String, Object> update : updates) {
             //Comprobamos que el formato de la petición patch sea correcto:
