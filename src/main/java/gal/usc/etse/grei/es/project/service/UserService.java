@@ -1,6 +1,5 @@
 package gal.usc.etse.grei.es.project.service;
 
-import com.github.fge.jsonpatch.JsonPatchException;
 import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.*;
 import gal.usc.etse.grei.es.project.model.User;
@@ -10,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -80,7 +78,8 @@ public class UserService {
         //Si no, eliminamos los campos que no nos interesan:
         result.forEach((it) -> {
             it.setEmail(null);
-            it.setFriends(null);
+            it.setRoles(null);
+            it.setPassword(null);
         });
 
         //Finalmente, se devuelve el optional del resultado:
@@ -156,83 +155,6 @@ public class UserService {
 
         //Aplicamos patch y guardamos el resultado:
         return Optional.of(users.save(patchUtils.patch(user, updates)));
-    }
-
-    /**
-     * Método que permite añadir un amigo a un usuario.
-     *
-     * @param userId El id del usuario a añadir.
-     * @param newFriend Los datos del nuevo amigo.
-     * @return El usuario completo con la lista de amigos añadida.
-     * @throws InvalidDataException Excepción lanzada en caso de datos incorrectos (usuarios ya amigos).
-     * @throws NoDataException Excepción lanzada en caso de datos desconocidos (usuario inexistente).
-     */
-    public Optional<User> addFriend(String userId, User newFriend) throws InvalidDataException, NoDataException {
-        //Comprobamos que el usuario y el amigo no sean la misma persona:
-        if(userId.equals(newFriend.getEmail())) {
-            throw new InvalidDataException(ErrorType.INVALID_INFO, "An user cannot be friend of himself");
-        }
-
-        //Comprobamos que el usuario y el amigo existan en la db. Usuario:
-        User user = users.findById(userId).orElseThrow(()->
-                new NoDataException(ErrorType.UNKNOWN_INFO, "There is no user with that id"));
-
-        //Comprobación amigo:
-        if(!users.existsById(newFriend.getEmail())) {
-            throw new NoDataException(ErrorType.UNKNOWN_INFO, "Friend cannot be added: user does not exist");
-        }
-
-        //Comprobamos si el array de amigos del usuario está vacío (para crearlo):
-        if(user.getFriends() == null){
-            user.setFriends(new ArrayList<>());
-        }
-
-        //Comprobamos si el usuario y el posible amigo ya lo son:
-        if(!user.getFriends().contains(newFriend)){
-            //Si no lo son, añadimos nuevo amigo:
-            user.getFriends().add(newFriend);
-            //Guardamos los cambios y devolvemos el resultado:
-            return Optional.of(users.save(user));
-        } else {
-            //Si ya lo son, se manda una excepción:
-            throw new InvalidDataException(ErrorType.INVALID_INFO, "Both users already are friends");
-        }
-    }
-
-    /**
-     * Método que permite eliminar un amigo de un usuario.
-     *
-     * @param userId El id del usuario.
-     * @param friendId El id del amigo a eliminar
-     * @return El usuario completo sin el amigo.
-     * @throws InvalidDataException Excepción lanzada si hay incoherencias
-     * @throws NoDataException Excepción lanzada si algún dato no existe (usuario, amigo).
-     */
-    public Optional<User> deleteFriend(String userId, String friendId) throws InvalidDataException, NoDataException {
-        //Comprobamos que el id de usuario sea válido:
-        User resultUser = users.findById(userId).orElseThrow(()->
-                new NoDataException(ErrorType.UNKNOWN_INFO, "User does not exists"));
-
-        //Comprobamos que exista el amigo:
-        User friendUser = users.findById(friendId).orElseThrow(()->
-                new NoDataException(ErrorType.UNKNOWN_INFO, "Friend does not exists"));
-
-        //Comprobamos con el nombre y el mail si los dos usuarios son amigos:
-        //Vamos recorriendo el bucle hasta encontrar una coincidencia de emails entre el de un amigo y el buscado:
-        if(resultUser.getFriends() != null) {
-            //Sabiendo que no es null, haremos ese recorrido:
-            for(User user: resultUser.getFriends()){
-                if (user.getEmail().equals(friendUser.getEmail())) {
-                    //Si lo son, eliminamos el amigo:
-                    resultUser.getFriends().remove(user);
-                    //Se devuelve el usuario tras los cambios.
-                    return Optional.of(users.save(resultUser));
-                }
-            }
-        }
-
-        //En caso de no cumplirse lo anterior, se lanza una excepción:
-        throw new InvalidDataException(ErrorType.INVALID_INFO, "Both users are not friends");
     }
 
     /**

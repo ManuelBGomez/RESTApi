@@ -126,6 +126,20 @@ public class AssessmentService {
             if(update.get("path").equals("/id")){
                 throw new ForbiddenActionException(ErrorType.FORBIDDEN, "You cannot change the comment's id");
             }
+            //Comprobamos que el rating, si se quiere cambiar, esté entre 1 y 5:
+            if(update.get("path").equals("/rating")){
+                int val = 0;
+                //Intentamos recuperar el valor y forzar cast a entero:
+                try {
+                    val = (int) update.get("value");
+                } catch(ClassCastException ex) {
+                    //Si no se puede convertir a entero, se manda una excepción:
+                    throw new InvalidDataException(ErrorType.INVALID_INFO, "Rating must be an Integer");
+                }
+                //Si el rating no está entre 1 y 5, se manda también una excepción:
+                if(val < 1 || val > 5) throw new InvalidDataException(ErrorType.INVALID_INFO, "Rating must be between" +
+                        " 1 and 5.");
+            }
         }
 
         //Comprobamos que existe el comentario y que esté asociado a la película correcta:

@@ -1,8 +1,10 @@
 package gal.usc.etse.grei.es.project.controller;
 
+import gal.usc.etse.grei.es.project.model.Friendship;
 import gal.usc.etse.grei.es.project.model.validation.createValidation;
 import gal.usc.etse.grei.es.project.model.validation.friendValidation;
 import gal.usc.etse.grei.es.project.service.AssessmentService;
+import gal.usc.etse.grei.es.project.service.FriendService;
 import gal.usc.etse.grei.es.project.utilities.AuxMethods;
 import gal.usc.etse.grei.es.project.utilities.Constants;
 import gal.usc.etse.grei.es.project.model.Assessment;
@@ -16,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -30,18 +33,21 @@ import java.util.Optional;
 public class UserController {
     private final UserService users;
     private final AssessmentService assessments;
+    private final FriendService friends;
 
     /**
      * Constructor de la clase
      *
      * @param users Instancia de la clase UserService
+     * @param assessments Instancia de la clase AssessmentService
+     * @param friends Instancia de la clase FriendService
      */
     @Autowired
-    public UserController(UserService users, AssessmentService assessments){
+    public UserController(UserService users, AssessmentService assessments, FriendService friends){
         this.users = users;
         this.assessments = assessments;
+        this.friends = friends;
     }
-
 
     /**
      * Método: GET
@@ -85,7 +91,6 @@ public class UserController {
         //Devolvemos la ResponseEntity adecuada (ok si hay resultados, not found si no los hay):
         return ResponseEntity.of(users.get(page, size, Sort.by(criteria), name, email));
     }
-
 
     /**
      * Método: POST
@@ -159,7 +164,7 @@ public class UserController {
      * Objetivo: añadir un amigo al usuario con los datos especificados.
      *
      * @param id El id del usuario al cual se le quiere añadir un amigo.
-     * @param newFriend Los datos del nuevo usuario.
+     * @param friendship Datos de la amistad.
      * @return estado correcto en caso de encontrar al usuario y al amigo, y haber añadido dicho amigo, si no, estado
      *          de error.
      */
@@ -168,14 +173,15 @@ public class UserController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<User> addFriend(@PathVariable("id") String id,
-                                     @Validated(friendValidation.class) @RequestBody User newFriend){
-        //Llamamos al método de la clase de usuarios:
-        Optional<User> result = users.addFriend(id, newFriend);
-        //Devovlemos respuesta ok con los datos si ha ido bien la ejecución:
-        return ResponseEntity.ok(result.get());
+    ResponseEntity<Friendship> addFriend(@PathVariable("id") String id,
+                                   @Valid @RequestBody Friendship friendship){
+        //Tratamos de devolver el estado adecuado si se crea la amistad:
+        Friendship inserted = friends.addFriend(id, friendship);
+        return ResponseEntity.created(URI.create(Constants.URL + "/users/" + inserted.getUser() + "/friends/"
+                + inserted.getFriend())).body(inserted);
     }
 
+    /*
     /**
      * Método: DELETE
      * Url para llegar: /users/{id}/friends/{idFriend}
@@ -184,7 +190,7 @@ public class UserController {
      * @param id El identificador del usuario del cual se quiere eliminar un amigo.
      * @param idFriend El identificador del amigo que se quiere eliminar.
      * @return Los datos del usuario tras la eliminación si se pudo hacer, o un estado de error.
-     */
+     *//*
     @DeleteMapping(
             path = "{id}/friends/{idFriend}",
             produces = MediaType.APPLICATION_JSON_VALUE
@@ -194,7 +200,7 @@ public class UserController {
         //Se intenta hacer el borrado:
         Optional<User> result = users.deleteFriend(id, idFriend);
         return ResponseEntity.ok(result.get());
-    }
+    }*/
 
     /**
      * Método: GET
