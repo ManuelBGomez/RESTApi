@@ -1,6 +1,5 @@
 package gal.usc.etse.grei.es.project.controller;
 
-import gal.usc.etse.grei.es.project.errorManagement.exceptions.*;
 import gal.usc.etse.grei.es.project.model.validation.createValidation;
 import gal.usc.etse.grei.es.project.model.validation.friendValidation;
 import gal.usc.etse.grei.es.project.service.AssessmentService;
@@ -12,7 +11,6 @@ import gal.usc.etse.grei.es.project.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -102,7 +100,7 @@ public class UserController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<Object> create(@Validated(createValidation.class) @RequestBody User user){
+    ResponseEntity<User> create(@Validated(createValidation.class) @RequestBody User user){
         //Se intenta crear el usuario:
         Optional<User> inserted = users.create(user);
         //Se devuelve un estado creado, con la URI con la que se puede acceder a él:
@@ -148,7 +146,7 @@ public class UserController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<Object> update(@PathVariable("id") String id, @RequestBody List<Map<String, Object>> updates){
+    ResponseEntity<User> update(@PathVariable("id") String id, @RequestBody List<Map<String, Object>> updates){
         //Intentamos hacer la actualización:
         Optional<User> result = users.update(id, updates);
         //Se devuelve un estado ok si se ha ejecutado correctamente:
@@ -170,12 +168,12 @@ public class UserController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<Object> addFriend(@PathVariable("id") String id,
+    ResponseEntity<User> addFriend(@PathVariable("id") String id,
                                      @Validated(friendValidation.class) @RequestBody User newFriend){
-            //Llamamos al método de la clase de usuarios:
-            Optional<User> result = users.addFriend(id, newFriend);
-            //Devovlemos respuesta ok con los datos si ha ido bien la ejecución:
-            return ResponseEntity.ok(result.get());
+        //Llamamos al método de la clase de usuarios:
+        Optional<User> result = users.addFriend(id, newFriend);
+        //Devovlemos respuesta ok con los datos si ha ido bien la ejecución:
+        return ResponseEntity.ok(result.get());
     }
 
     /**
@@ -191,7 +189,7 @@ public class UserController {
             path = "{id}/friends/{idFriend}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<Object> deleteFriend(@PathVariable("id") String id,
+    ResponseEntity<User> deleteFriend(@PathVariable("id") String id,
                                       @PathVariable("idFriend") String idFriend){
         //Se intenta hacer el borrado:
         Optional<User> result = users.deleteFriend(id, idFriend);

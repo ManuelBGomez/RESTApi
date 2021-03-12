@@ -1,9 +1,6 @@
 package gal.usc.etse.grei.es.project.controller;
 
-import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
-import gal.usc.etse.grei.es.project.errorManagement.exceptions.*;
 import gal.usc.etse.grei.es.project.model.validation.createValidation;
-import gal.usc.etse.grei.es.project.model.validation.modifyValidation;
 import gal.usc.etse.grei.es.project.service.AssessmentService;
 import gal.usc.etse.grei.es.project.utilities.AuxMethods;
 import gal.usc.etse.grei.es.project.utilities.Constants;
@@ -13,7 +10,6 @@ import gal.usc.etse.grei.es.project.service.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -120,7 +116,7 @@ public class MovieController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<Object> create(@Valid @RequestBody Film movie) {
+    ResponseEntity<Film> create(@Valid @RequestBody Film movie) {
         //Tratamos de crear la película:
         Optional<Film> inserted = movies.create(movie);
         //Si se crea correctamente, devolvemos la información de la película creada.
@@ -143,7 +139,7 @@ public class MovieController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<Object> update(@PathVariable("id") String id, @RequestBody List<Map<String, Object>> updates) {
+    ResponseEntity<Film> update(@PathVariable("id") String id, @RequestBody List<Map<String, Object>> updates) {
         //Se intenta hacer la actualización y se devuelve el resultado:
         return ResponseEntity.ok().body(movies.update(id, updates).get());
     }
@@ -182,7 +178,7 @@ public class MovieController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<Object> addComment(@PathVariable("id") String id,
+    ResponseEntity<Assessment> addComment(@PathVariable("id") String id,
                                            @RequestBody @Validated(createValidation.class) Assessment assessment){
         //Intentamos añadir el comentario:
         Optional<Assessment> comment = assessments.addComment(id, assessment);
@@ -235,7 +231,7 @@ public class MovieController {
             path = "{id}/comments/{commentId}",
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
-    ) ResponseEntity<Object> modifyComment(@PathVariable("id") String id, @PathVariable("commentId") String commentId,
+    ) ResponseEntity<Assessment> modifyComment(@PathVariable("id") String id, @PathVariable("commentId") String commentId,
                                            @RequestBody List<Map<String, Object>> updates){
         //Se intenta hacer la actualización y se devuelve el resultado:
         return ResponseEntity.ok().body(assessments.modifyComment(id, commentId, updates).get());
