@@ -181,7 +181,52 @@ public class UserController {
                 + inserted.getFriend())).body(inserted);
     }
 
-    /*
+    /**
+     * Método: GET.
+     * Url para llegar: /users/{id}/friends/{friendId}
+     * Objetivo: recuperar los datos de una amistad.
+     *
+     * @param id El id de uno de los usuarios.
+     * @param friendId El id del amigo.
+     * @return Los datos de la amistad.
+     */
+    @GetMapping(
+            path = "{id}/friends/{friendId}",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    ResponseEntity<Friendship> getFriendship(@PathVariable("id") String id,
+                                             @PathVariable("friendId") String friendId){
+        //Llamamos al método que corresponde para recuperar la información de la amistad.
+        return ResponseEntity.ok(friends.getFriendship(id, friendId));
+    }
+
+    /**
+     * Método: GET.
+     * Url para llegar: /users/{id}/friends
+     * Objetivo: recuperar todos los amigos de un usuario determinado.
+     *
+     * @param page La página a recuperar.
+     * @param size Tamaño de la página a recuperar.
+     * @param sort Criterios de ordenación.
+     * @param id Identificador del usuario para el cual se recuperarán sus amigos.
+     * @return La página que corresponda con los datos de los amigos.
+     */
+    @GetMapping(
+            path = "{id}/friends",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    ResponseEntity<Page<Friendship>> getUserFriendships(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size,
+            @RequestParam(name = "sort", defaultValue = "") List<String> sort,
+            @PathVariable("id") String id
+    ) {
+        //Recuperamos criterios de ordenación
+        List<Sort.Order> criteria = AuxMethods.getSortCriteria(sort);
+        //Se procede a hacer la búsqueda y devolver los resultados:
+        return ResponseEntity.of(friends.getUserFriendships(page,size,Sort.by(criteria),id));
+    }
+
     /**
      * Método: DELETE
      * Url para llegar: /users/{id}/friends/{idFriend}
@@ -189,18 +234,41 @@ public class UserController {
      *
      * @param id El identificador del usuario del cual se quiere eliminar un amigo.
      * @param idFriend El identificador del amigo que se quiere eliminar.
-     * @return Los datos del usuario tras la eliminación si se pudo hacer, o un estado de error.
-     *//*
+     * @return Un estado noContent si se pudo hacer la eliminación, el error adecuado en caso contrario.
+     */
     @DeleteMapping(
             path = "{id}/friends/{idFriend}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<User> deleteFriend(@PathVariable("id") String id,
+    ResponseEntity<Object> deleteFriend(@PathVariable("id") String id,
                                       @PathVariable("idFriend") String idFriend){
         //Se intenta hacer el borrado:
-        Optional<User> result = users.deleteFriend(id, idFriend);
-        return ResponseEntity.ok(result.get());
-    }*/
+        friends.deleteFriend(id, idFriend);
+        //Si el método finaliza correctamente, se devuelve un noContent:
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Método: PATCH
+     * Url para llegar: /users/{id}/friends/{friendId}
+     * Objetivo: modificar la relación de amistad, de manera que se confirme la relación entre dos amigos.
+     *
+     * @param id El id del usuario al que alguien ha añadido como amigo.
+     * @param friendId El id del amigo que añadió al usuario.
+     * @param updates Las actualizaciones a realizar
+     * @return El usuario actualizado sobre la base de datos y un estado correcto si salió bien, si no, estado de error.
+     */
+    @PatchMapping(
+            path = "{id}/friends/{friendId}",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    ResponseEntity<Friendship> updateFriendship(@PathVariable("id") String id, @PathVariable("friendId") String friendId,
+                                                @RequestBody List<Map<String, Object>> updates){
+        //Se devuelve estado ok si se logra hacer la actualización:
+        return ResponseEntity.ok(friends.updateFriendship(id, friendId, updates));
+    }
+
 
     /**
      * Método: GET
