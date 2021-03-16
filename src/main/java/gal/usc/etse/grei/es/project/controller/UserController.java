@@ -2,7 +2,6 @@ package gal.usc.etse.grei.es.project.controller;
 
 import gal.usc.etse.grei.es.project.model.Friendship;
 import gal.usc.etse.grei.es.project.model.validation.createValidation;
-import gal.usc.etse.grei.es.project.model.validation.friendValidation;
 import gal.usc.etse.grei.es.project.service.AssessmentService;
 import gal.usc.etse.grei.es.project.service.FriendService;
 import gal.usc.etse.grei.es.project.utilities.AuxMethods;
@@ -15,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -53,6 +53,7 @@ public class UserController {
      * Método: GET
      * Url para llegar: /users/{id}
      * Objetivo: recuperar los datos del usuario cuyo id es facilitado a través de la URL.
+     * Permisos: administrador, el propio usuario o un amigo del usuario.
      *
      * @param id El identificador del usuario para recuperar la información.
      * @return Si el id es válido, los datos del usuario cuyo id ha sido facilitado como parámetro.
@@ -61,6 +62,7 @@ public class UserController {
             path = "{id}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasRole('ADMIN') or #id == principal or @userService.areFriends(#id, principal)")
     ResponseEntity<User> get(@PathVariable("id") String id) {
         return ResponseEntity.of(users.get(id));
     }
@@ -79,7 +81,9 @@ public class UserController {
      */
     @GetMapping(
             produces = MediaType.APPLICATION_JSON_VALUE
-    ) ResponseEntity<Page<User>> get(
+    )
+    @PreAuthorize("isAuthenticated()")
+    ResponseEntity<Page<User>> get(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size,
             @RequestParam(name = "sort", defaultValue = "") List<String> sort,

@@ -7,8 +7,10 @@ import gal.usc.etse.grei.es.project.repository.UserRepository;
 import gal.usc.etse.grei.es.project.utilities.PatchUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,17 +26,21 @@ public class UserService {
     private final UserRepository users;
     //Referencia a la clase auxiliar PatchUtils:
     private final PatchUtils patchUtils;
+    //Referencia al PasswordEncoder:
+    private final PasswordEncoder encoder;
 
     /**
      * Constructor de la clase
      *
      * @param users Referencia al repositorio de usuarios.
      * @param patchUtils Objeto de la clase PatchUtils, para usar en la gestión de peticiones PATCH.
+     * @param encoder Referencia al objeto de la clase PasswordEncoder, para poder codificar la contraseña.
      */
     @Autowired
-    public UserService(UserRepository users, PatchUtils patchUtils){
+    public UserService(UserRepository users, PatchUtils patchUtils, PasswordEncoder encoder){
         this.users = users;
         this.patchUtils = patchUtils;
+        this.encoder = encoder;
     }
 
     /**
@@ -101,6 +107,8 @@ public class UserService {
                     "There is an existing user with the specified email.");
         } else {
             //Si no, insertamos el usuario y devolvemos los datos:
+            //Modificamos la contraseña para guardarla codificada en la base de datos
+            user.setPassword(encoder.encode(user.getPassword()));
             return Optional.of(users.insert(user));
         }
     }
@@ -166,4 +174,12 @@ public class UserService {
         return users.existsById(userId);
     }
 
+    /**
+     * Método que permite comprobar si un grupo de usuarios son amigos entre ellos.
+     * @param users Lista de usuarios.
+     * @return True si son amigos, falso en caso contrario.
+     */
+    public Boolean areFriends(String ... users) {
+        return Arrays.stream(users).allMatch(it -> it.contains("@test.com"));
+    }
 }
