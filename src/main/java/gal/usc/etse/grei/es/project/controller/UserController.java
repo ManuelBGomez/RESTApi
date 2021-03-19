@@ -62,7 +62,7 @@ public class UserController {
             path = "{id}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("hasRole('ADMIN') or #id == principal or @userService.areFriends(#id, principal)")
+    @PreAuthorize("hasRole('ADMIN') or #id == principal or @friendService.areFriends(#id, principal)")
     ResponseEntity<User> get(@PathVariable("id") String id) {
         return ResponseEntity.of(users.get(id));
     }
@@ -71,6 +71,7 @@ public class UserController {
      * Método: GET
      * Url para llegar: /users
      * Objetivo: recuperar los datos de todos los usuarios, filtrados por nombre y email.
+     * Permisos: sólo usuarios logueados.
      *
      * @param page La página a recuperar
      * @param size Tamaño de la página.
@@ -100,6 +101,7 @@ public class UserController {
      * Método: POST
      * Url para llegar: /users
      * Objetivo: crear un nuevo usuario con los datos facilitados.
+     * Permisos: cualquiera.
      *
      * @param user Los datos del nuevo usuario que se quiere insertar
      * @return Los datos del usuario insertado y la url para recuperar su información, o un estado erróneo
@@ -121,6 +123,7 @@ public class UserController {
      * Método: DELETE
      * Url para llegar: /users/{id}
      * Objetivo: eliminar el usuario con el id facilitado
+     * Permisos: única y exclusivamente el propio usuario.
      *
      * @param id el identificador (email) del usuario que se quiere borrar
      * @return estado correcto en caso de encontrar al usuario y borrarlo correctamente y estado Not Found
@@ -130,6 +133,7 @@ public class UserController {
             path = "{id}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("#id == principal")
     ResponseEntity<Object> delete(
                 @PathVariable("id") String id
             ) {
@@ -144,6 +148,7 @@ public class UserController {
      * Url para llegar: /users/{id}
      * Objetivo: actualizar los datos del usuario con el id facilitado. No se podrá actualizar ni el mail ni la fecha de
      *          nacimiento.
+     * Permisos: única y exclusivamente el propio usuario.
      *
      * @param id El id del usuario cuyos demás datos se quieren actualizar.
      * @param updates Las actualizaciones que se deben realizar.
@@ -155,6 +160,7 @@ public class UserController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("#id==principal")
     ResponseEntity<User> update(@PathVariable("id") String id, @RequestBody List<Map<String, Object>> updates){
         //Intentamos hacer la actualización:
         Optional<User> result = users.update(id, updates);
@@ -166,6 +172,7 @@ public class UserController {
      * Método: POST
      * Url para llegar: /users/{id}/friends
      * Objetivo: añadir un amigo al usuario con los datos especificados.
+     * Permisos: única y exclusivamente el propio usuario.
      *
      * @param id El id del usuario al cual se le quiere añadir un amigo.
      * @param friendship Datos de la amistad.
@@ -177,6 +184,7 @@ public class UserController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("#id==principal")
     ResponseEntity<Friendship> addFriend(@PathVariable("id") String id,
                                    @Valid @RequestBody Friendship friendship){
         //Tratamos de devolver el estado adecuado si se crea la amistad:
@@ -189,6 +197,8 @@ public class UserController {
      * Método: GET.
      * Url para llegar: /users/{id}/friends/{friendId}
      * Objetivo: recuperar los datos de una amistad.
+     * Permisos: únicamente los implicados en la relación de amistad.
+     * Pongo al primer usuario dado que el segundo es el amigo que corresponde.
      *
      * @param id El id de uno de los usuarios.
      * @param friendId El id del amigo.
@@ -198,8 +208,9 @@ public class UserController {
             path = "{id}/friends/{friendId}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("#id==principal")
     ResponseEntity<Friendship> getFriendship(@PathVariable("id") String id,
-                                             @PathVariable("friendId") String friendId){
+                                             @PathVariable("friendId") String friendId) {
         //Llamamos al método que corresponde para recuperar la información de la amistad.
         return ResponseEntity.ok(friends.getFriendship(id, friendId));
     }
@@ -208,6 +219,7 @@ public class UserController {
      * Método: GET.
      * Url para llegar: /users/{id}/friends
      * Objetivo: recuperar todos los amigos de un usuario determinado.
+     * Permisos: única y exclusivamente el propio usuario.
      *
      * @param page La página a recuperar.
      * @param size Tamaño de la página a recuperar.
@@ -219,6 +231,7 @@ public class UserController {
             path = "{id}/friends",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("#id==principal")
     ResponseEntity<Page<Friendship>> getUserFriendships(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size,
@@ -235,6 +248,7 @@ public class UserController {
      * Método: DELETE
      * Url para llegar: /users/{id}/friends/{idFriend}
      * Objetivo: borrar el amigo que se facilita por url, del usuario cuyo id también se facilita por url.
+     * Permisos: única y exclusivamente el propio usuario.
      *
      * @param id El identificador del usuario del cual se quiere eliminar un amigo.
      * @param idFriend El identificador del amigo que se quiere eliminar.
@@ -244,6 +258,7 @@ public class UserController {
             path = "{id}/friends/{idFriend}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("#id==principal")
     ResponseEntity<Object> deleteFriend(@PathVariable("id") String id,
                                       @PathVariable("idFriend") String idFriend){
         //Se intenta hacer el borrado:
@@ -256,6 +271,7 @@ public class UserController {
      * Método: PATCH
      * Url para llegar: /users/{id}/friends/{friendId}
      * Objetivo: modificar la relación de amistad, de manera que se confirme la relación entre dos amigos.
+     * Permisos: únicamente el amigo que quiere confirmar.
      *
      * @param id El id del usuario al que alguien ha añadido como amigo.
      * @param friendId El id del amigo que añadió al usuario.
@@ -267,6 +283,7 @@ public class UserController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("#id==principal and @friendService.hasToConfirm(#friendId, principal)")
     ResponseEntity<Friendship> updateFriendship(@PathVariable("id") String id, @PathVariable("friendId") String friendId,
                                                 @RequestBody List<Map<String, Object>> updates){
         //Se devuelve estado ok si se logra hacer la actualización:
@@ -278,6 +295,7 @@ public class UserController {
      * Método: GET
      * Url para llegar: /users/{id}/comments
      * Objetivo: recuperar los comentarios de un usuario.
+     * Permisos: administrador, el propio usuario o un amigo del usuario.
      *
      * @param page Página a recuperar
      * @param size Tamaño de la página
@@ -289,6 +307,7 @@ public class UserController {
             path = "{id}/comments",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasRole('ADMIN') or #userId ==principal or @friendService.areFriends(#userId, principal)")
     ResponseEntity<Page<Assessment>> getUserComments(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size,
@@ -301,5 +320,4 @@ public class UserController {
         //Se hace la búsqueda y se devuelve el estado apropiado (por eso se usa of):
         return ResponseEntity.of(assessments.getUserComments(page, size, Sort.by(criteria), userId));
     }
-
 }

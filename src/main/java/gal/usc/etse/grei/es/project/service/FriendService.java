@@ -211,4 +211,26 @@ public class FriendService {
             throw new ForbiddenActionException(ErrorType.FORBIDDEN, "Only 1 modification for friendship confirmation allowed");
         }
     }
+
+    /**
+     * Método que permite comprobar si dos usuarios son amigos entre ellos.
+     * @param user1 Primer usuario.
+     * @param user2 Segundo usuario.
+     * @return True si son amigos, falso en caso contrario.
+     */
+    public Boolean areFriends(String user1, String user2) {
+        //Comprobamos si los dos usuarios tienen amistad (recordemos que puede ir en los dos sentidos):
+        return friends.existsByUserAndFriend(user1, user2) || friends.existsByUserAndFriend(user2, user1);
+    }
+
+    /**
+     * Método que permite comprobar si dos usuarios son amigos entre ellos,solamente en un sentido.
+     * @param user1 Primer usuario.
+     * @param user2 Segundo usuario.
+     * @return True si son amigos en un sentido, falso en caso contrario.
+     */
+    public Boolean hasToConfirm(String user1, String user2) {
+        //Comprobamos si los dos usuarios tienen amistad en un sentido:
+        return friends.existsByUserAndFriend(user1, user2);
+    }
 }

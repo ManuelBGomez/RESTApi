@@ -10,7 +10,6 @@ import org.springframework.data.domain.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -109,7 +108,8 @@ public class UserService {
             //Si no, insertamos el usuario y devolvemos los datos:
             //Modificamos la contraseña para guardarla codificada en la base de datos
             user.setPassword(encoder.encode(user.getPassword()));
-            return Optional.of(users.insert(user));
+            //Devolvemos sin indicar ni contraseña ni roles (aunque la contraseña vaya encriptada):
+            return Optional.of(users.insert(user).setRoles(null).setPassword(null));
         }
     }
 
@@ -162,7 +162,8 @@ public class UserService {
                 "No user with the specified email"));
 
         //Aplicamos patch y guardamos el resultado:
-        return Optional.of(users.save(patchUtils.patch(user, updates)));
+        //EL resultado devuelto oculta roles y contraseña:
+        return Optional.of(users.save(patchUtils.patch(user, updates)).setRoles(null).setPassword(null));
     }
 
     /**
@@ -172,14 +173,5 @@ public class UserService {
      */
     public boolean existsById(String userId){
         return users.existsById(userId);
-    }
-
-    /**
-     * Método que permite comprobar si un grupo de usuarios son amigos entre ellos.
-     * @param users Lista de usuarios.
-     * @return True si son amigos, falso en caso contrario.
-     */
-    public Boolean areFriends(String ... users) {
-        return Arrays.stream(users).allMatch(it -> it.contains("@test.com"));
     }
 }

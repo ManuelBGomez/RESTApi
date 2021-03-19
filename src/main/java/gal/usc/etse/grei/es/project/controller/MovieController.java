@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -50,6 +51,7 @@ public class MovieController {
      * Método: GET
      * Url para llegar: /movies
      * Objetivo: recuperar todas las películas en base a diferentes filtros.
+     * Permisos: todos los usuarios logueados.
      *
      * @param page La página a recuperar
      * @param size Tamaño de la página.
@@ -66,7 +68,9 @@ public class MovieController {
      */
     @GetMapping(
             produces = MediaType.APPLICATION_JSON_VALUE
-    ) ResponseEntity<Page<Film>> get(
+    )
+    @PreAuthorize("isAuthenticated()")
+    ResponseEntity<Page<Film>> get(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size,
             @RequestParam(name = "sort", defaultValue = "") List<String> sort,
@@ -91,6 +95,7 @@ public class MovieController {
      * Método: GET
      * Url para llegar: /movies/{id}
      * Objetivo: recuperar los datos de la película con el id facilitado.
+     * Permisos: todos los usuarios logueados.
      *
      * @param id El id de la película cuyos datos se quieren recuperar.
      * @return Si el Id es válido, los datos de la película.
@@ -99,6 +104,7 @@ public class MovieController {
             path = "{id}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("isAuthenticated()")
     ResponseEntity<Film> get(@PathVariable("id") String id) {
         //Tratamos de recuperar la película:
         return ResponseEntity.of(movies.get(id));
@@ -108,6 +114,7 @@ public class MovieController {
      * Método: POST
      * Url para llegar: /movies
      * Objetivo: insertar la película que se facilita como parámetro.
+     * Permisos: sólo los administradores.
      *
      * @param movie los datos de la película a insertar
      * @return Si la inserción se ha podido hacer, la nueva película y la url para acceder a ella.
@@ -116,6 +123,7 @@ public class MovieController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasRole('ADMIN')")
     ResponseEntity<Film> create(@Valid @RequestBody Film movie) {
         //Tratamos de crear la película:
         Optional<Film> inserted = movies.create(movie);
@@ -129,6 +137,7 @@ public class MovieController {
      * Método: PATCH
      * Url para llegar: /movies/{id}
      * Objetivo: actualizar la película con el id pasado por url, y con los datos facilitados como parámetro.
+     * Permisos: sólo los administradores.
      *
      * @param id El id de la película a actualizar
      * @param updates Datos a actualizar
@@ -139,6 +148,7 @@ public class MovieController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasRole('ADMIN')")
     ResponseEntity<Film> update(@PathVariable("id") String id, @RequestBody List<Map<String, Object>> updates) {
         //Se intenta hacer la actualización y se devuelve el resultado:
         return ResponseEntity.ok().body(movies.update(id, updates).get());
@@ -148,6 +158,7 @@ public class MovieController {
      * Método: DELETE
      * Url para llegar: /movies/{id}
      * Objetivo: borrar la película con el id facilitado vía url.
+     * Permisos: sólo los administradores.
      *
      * @param id el id de la película a borrar.
      * @return no se devuelve contenido, pero sí un mensaje avisando del borrado correcto o del error, en caso de no
@@ -157,6 +168,7 @@ public class MovieController {
             path = "{id}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasRole('ADMIN')")
     ResponseEntity<Object> delete(@PathVariable("id") String id){
         //Se trata de borrar la película con el id especificado:
         movies.delete(id);
@@ -168,6 +180,7 @@ public class MovieController {
      * Método: POST
      * Url para llegar: /movies/{id}/comments
      * Objetivo: añadir un comentario para la película con el id indicado en la URL.
+     * Permisos: todos los usuarios logueados
      *
      * @param id el id de la película sobre la cual se va a insertar un comentario.
      * @param assessment los datos del comentario a añadir, incluyendo el usuario que lo hace.
@@ -178,6 +191,7 @@ public class MovieController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("isAuthenticated()")
     ResponseEntity<Assessment> addComment(@PathVariable("id") String id,
                                            @RequestBody @Validated(createValidation.class) Assessment assessment){
         //Intentamos añadir el comentario:
@@ -191,6 +205,7 @@ public class MovieController {
      * Método: GET
      * Url para llegar: /movies/{id}/comments
      * Objetivo: obtener todos los comentarios asociados a una película.
+     * Permisos: todos los usuarios logueados
      *
      * @param page la página a recuperar
      * @param size el tamaño de cada página
@@ -202,7 +217,9 @@ public class MovieController {
     @GetMapping(
             path = "{id}/comments",
             produces = MediaType.APPLICATION_JSON_VALUE
-    ) ResponseEntity<Page<Assessment>> getComments(
+    )
+    @PreAuthorize("isAuthenticated()")
+    ResponseEntity<Page<Assessment>> getComments(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size,
             @RequestParam(name = "sort", defaultValue = "") List<String> sort,
@@ -221,6 +238,7 @@ public class MovieController {
      * Url para llegar: /movies/{id}/comments/{commentId}
      * Objetivo: modificar el comentario cuyo id se indica en la URL, de la película cuyo id también
      *      se indica por esa vía.
+     * Permisos: exclusivamente el autor del comentario.
      *
      * @param id El identificador de la película de la que se quiere modificar un comentario.
      * @param commentId El identificador del comentario que se quiere modificar.
@@ -231,7 +249,9 @@ public class MovieController {
             path = "{id}/comments/{commentId}",
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
-    ) ResponseEntity<Assessment> modifyComment(@PathVariable("id") String id, @PathVariable("commentId") String commentId,
+    )
+    @PreAuthorize("@assessmentService.isUserComment(principal, #commentId)")
+    ResponseEntity<Assessment> modifyComment(@PathVariable("id") String id, @PathVariable("commentId") String commentId,
                                            @RequestBody List<Map<String, Object>> updates){
         //Se intenta hacer la actualización y se devuelve el resultado:
         return ResponseEntity.ok().body(assessments.modifyComment(id, commentId, updates).get());
@@ -242,6 +262,7 @@ public class MovieController {
      * Url para llegar: /movies/{id}/comments/{commentId}
      * Objetivo: borrar el comentario cuyo id se indica en la URL, de la película cuyo id se indica
      *      por esa misma vía.
+     * Permisos: el autor del comentario o un administrador.
      *
      * @param movieId El id de la película de la que se quiere borrar un comentario.
      * @param commentId El comentario a borrar
@@ -251,6 +272,7 @@ public class MovieController {
             path = "{id}/comments/{commentId}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasRole('ADMIN') or @assessmentService.isUserComment(principal, #commentId)")
     ResponseEntity<Object> deleteComment(@PathVariable("id") String movieId,
                                  @PathVariable("commentId") String commentId){
         //Se intenta borrar la película

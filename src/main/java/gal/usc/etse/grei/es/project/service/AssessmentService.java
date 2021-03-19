@@ -3,6 +3,7 @@ package gal.usc.etse.grei.es.project.service;
 import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.*;
 import gal.usc.etse.grei.es.project.model.Assessment;
+import gal.usc.etse.grei.es.project.model.User;
 import gal.usc.etse.grei.es.project.repository.AssessmentRepository;
 import gal.usc.etse.grei.es.project.utilities.PatchUtils;
 import org.springframework.data.domain.Page;
@@ -27,6 +28,7 @@ public class AssessmentService {
     //Referencias a clases service auxiliares:
     private final MovieService movies;
     private final UserService users;
+    private final FriendService friends;
     //Referencia a la clase auxiliar PatchUtils:
     private final PatchUtils patchUtils;
 
@@ -35,13 +37,16 @@ public class AssessmentService {
      * @param assessments Referencia al repositorio de comentarios
      * @param movies Referencia al servicio de películas
      * @param users Referencia al servicio de usuarios
+     * @param friends Referencia al servicio de amigos
      * @param patchUtils Objeto de la clase PatchUtils, para usar en la gestión de peticiones PATCH
      */
-    public AssessmentService(AssessmentRepository assessments, MovieService movies, UserService users, PatchUtils patchUtils){
+    public AssessmentService(AssessmentRepository assessments, MovieService movies,
+                             UserService users, FriendService friends, PatchUtils patchUtils){
         this.assessments = assessments;
         this.movies = movies;
         this.users = users;
         this.patchUtils = patchUtils;
+        this.friends = friends;
     }
 
     /**
@@ -196,5 +201,40 @@ public class AssessmentService {
         Page<Assessment> result = assessments.findAllByUserEmail(userId, request);
         //Devolvemos el optional.
         return Optional.of(result);
+    }
+
+
+    /**
+     * Método que permite determinar si un comentario pertenece a un usuario o a un amigo suyo.
+     *
+     * @param userId El id del usuario especificado.
+     * @param assessmentId El id del comentario.
+     * @return True si es así, false si no.
+     */
+    public boolean isUserOrFriendComment(String userId, String assessmentId){
+        //Recuperamos el comentario completo. Si no existiese, se lanza un not found:
+        Assessment assessment = assessments.findById(assessmentId)
+                .orElseThrow(()->new NoDataException(ErrorType.UNKNOWN_INFO, "No assessment with the specified id"));
+        //Recuperado el comentario, comprobamos si el usuario coincide:
+        User user = assessment.getUser();
+        //Devolvemos si el comentario del usuario o de un amigo del mismo. Comprobamos que el usuario no sea null (no debería):
+        return user != null && (userId.equals(assessment.getUser().getEmail()) || friends.areFriends(userId, user.getEmail()));
+    }
+
+    /**
+     * Método que permite determinar si un comentario pertenece a un usuario.
+     *
+     * @param userId El id del usuario especificado.
+     * @param assessmentId El id del comentario.
+     * @return True si es así, false si no.
+     */
+    public boolean isUserComment(String userId, String assessmentId){
+        //Recuperamos el comentario completo. Si no existiese, se lanza un not found:
+        Assessment assessment = assessments.findById(assessmentId)
+                .orElseThrow(()->new NoDataException(ErrorType.UNKNOWN_INFO, "No assessment with the specified id"));
+        //Recuperado el comentario, comprobamos si el usuario coincide:
+        User user = assessment.getUser();
+        //Devolvemos si el comentario del usuario. Comprobamos que el usuario no sea null (no debería):
+        return user != null && userId.equals(assessment.getUser().getEmail());
     }
 }
