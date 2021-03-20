@@ -2,6 +2,8 @@ package gal.usc.etse.grei.es.project.utilities;
 
 import org.springframework.data.domain.Sort;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -25,13 +27,14 @@ public class AuxMethods {
     public static List<Sort.Order> getSortCriteria(List<String> sort){
         //Antes de nada, si se indicase un criterio de ordenación por fecha, se consideraria por los tres campos:
         //Si no hacemos esto, la ordenación sería incorrecta (ordenaría primero por día).
-        AuxMethods.sortDate(sort, "+releaseDate");
-        AuxMethods.sortDate(sort, "-releaseDate");
-        AuxMethods.sortDate(sort, "+birthday");
-        AuxMethods.sortDate(sort, "-birthday");
+        List<String> sortAux = new ArrayList<>(sort);
+        AuxMethods.sortDate(sortAux, "+releaseDate");
+        AuxMethods.sortDate(sortAux, "-releaseDate");
+        AuxMethods.sortDate(sortAux, "+birthday");
+        AuxMethods.sortDate(sortAux, "-birthday");
 
         //Elaboramos la lista que se devolverá como resultado:
-        return sort.stream().map(string -> {
+        return sortAux.stream().map(string -> {
             //Para determinar si la ordenación es ascendente o descendente, se considera el símbolo inicial del string.
             if(string.startsWith("+")){
                 //Si es "+", entonces la ordenación es ascendente.

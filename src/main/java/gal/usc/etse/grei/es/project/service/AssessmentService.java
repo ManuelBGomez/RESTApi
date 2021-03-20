@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -236,5 +237,16 @@ public class AssessmentService {
         User user = assessment.getUser();
         //Devolvemos si el comentario del usuario. Comprobamos que el usuario no sea null (no debería):
         return user != null && userId.equals(assessment.getUser().getEmail());
+    }
+
+    /**
+     * Método que recupera el usuario asociado a un comentario
+     * @param commentId El id del comentario
+     * @return El id del usuario autor del comentario
+     */
+    public String getUserId(String commentId) {
+        //Recuperamos el comentario y devolvemos el usuario:
+        Optional<Assessment> assessment = assessments.findById(commentId);
+        return assessment.isPresent() ? assessment.get().getUser().getEmail() : "";
     }
 }
