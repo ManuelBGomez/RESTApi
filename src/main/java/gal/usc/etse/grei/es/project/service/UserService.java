@@ -11,6 +11,7 @@ import org.springframework.data.domain.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -115,6 +116,10 @@ public class UserService {
                     "There is an existing user with the specified email.");
         } else {
             //Si no, insertamos el usuario y devolvemos los datos:
+            //Antes de nada se asigna el rol de usuario (independientemente de lo que llegue por la petición):
+            ArrayList<String> initialRoles = new ArrayList<>();
+            initialRoles.add("ROLE_USER");
+            user.setRoles(initialRoles);
             //Modificamos la contraseña para guardarla codificada en la base de datos
             user.setPassword(encoder.encode(user.getPassword()));
             //Devolvemos sin indicar ni contraseña ni roles (aunque la contraseña vaya encriptada):
@@ -167,6 +172,9 @@ public class UserService {
             }
             if(update.get("path").equals("/birthday")) {
                 throw new ForbiddenActionException(ErrorType.FORBIDDEN, "You cannot change the user's birthday");
+            }
+            if(update.get("path").equals("/roles")) {
+                throw new ForbiddenActionException(ErrorType.FORBIDDEN, "You cannot change the user's roles");
             }
         }
 

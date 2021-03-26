@@ -36,7 +36,6 @@ public class User {
     private Date birthday;
     @NotEmpty(groups = {createValidation.class}, message = "no password specified")
     private String password;
-    @NotEmpty(groups = {createValidation.class}, message = "no roles specified")
     private List<String> roles;
 
     public User() {}
