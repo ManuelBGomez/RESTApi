@@ -3,6 +3,7 @@ package gal.usc.etse.grei.es.project.service;
 import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.*;
 import gal.usc.etse.grei.es.project.model.User;
+import gal.usc.etse.grei.es.project.repository.AssessmentRepository;
 import gal.usc.etse.grei.es.project.repository.UserRepository;
 import gal.usc.etse.grei.es.project.utilities.PatchUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,9 @@ import java.util.Optional;
 public class UserService {
     //Referencias a las interfaces repository que necesitamos:
     private final UserRepository users;
+    private final AssessmentRepository assessments; //Usamos esto para evitar una dependencia circular.
+    //Referencia a las clases servicio auxiliares:
+    private final FriendService friends;
     //Referencia a la clase auxiliar PatchUtils:
     private final PatchUtils patchUtils;
     //Referencia al PasswordEncoder:
@@ -34,12 +38,17 @@ public class UserService {
      * @param users Referencia al repositorio de usuarios.
      * @param patchUtils Objeto de la clase PatchUtils, para usar en la gestión de peticiones PATCH.
      * @param encoder Referencia al objeto de la clase PasswordEncoder, para poder codificar la contraseña.
+     * @param friends Referencia al servicio de amigos.
+     * @param assessments Referencia al servicio de comentarios.
      */
     @Autowired
-    public UserService(UserRepository users, PatchUtils patchUtils, PasswordEncoder encoder){
+    public UserService(UserRepository users, PatchUtils patchUtils, PasswordEncoder encoder,
+                       FriendService friends, AssessmentRepository assessments){
         this.users = users;
         this.patchUtils = patchUtils;
         this.encoder = encoder;
+        this.friends = friends;
+        this.assessments = assessments;
     }
 
     /**
@@ -124,6 +133,10 @@ public class UserService {
         if(users.existsById(userMail)){
             //Se borra el usuario en caso de que existiese:
             users.deleteById(userMail);
+            //Vamos a borrar también las amistades de ese usuario:
+            friends.deleteAllByUserOrFriend(userMail);
+            //Finalmente, borraremos los comentarios realizados por ese usuario:
+            assessments.deleteAllByUserEmail(userMail);
         } else {
             //Si no existe, se lanza una excepción:
             throw new NoDataException(ErrorType.UNKNOWN_INFO, "The specified user does not exist.");

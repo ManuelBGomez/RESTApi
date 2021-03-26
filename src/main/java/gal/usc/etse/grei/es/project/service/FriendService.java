@@ -233,4 +233,13 @@ public class FriendService {
         //Comprobamos si los dos usuarios tienen amistad en un sentido:
         return friends.existsByUserAndFriend(user1, user2);
     }
+
+    /**
+     * Método que permite borrar todas las amistades del usuario por el identificador de este.
+     * @param userMail El email del usuario.
+     */
+    public void deleteAllByUserOrFriend(String userMail) {
+        //Borramos todos los que tengan como usuario o como amigo a este usuario:
+        friends.deleteAllByUserOrFriend(userMail, userMail);
+    }
 }
