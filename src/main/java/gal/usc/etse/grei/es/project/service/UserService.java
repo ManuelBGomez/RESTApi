@@ -195,4 +195,14 @@ public class UserService {
     public boolean existsById(String userId){
         return users.existsById(userId);
     }
+
+    /**
+     * Método que comprueba si un usuario existe en base a su id y su nombre
+     * @param email El id del posible usuario
+     * @param name El nombre del posible usuario
+     * @return Un booleano que indica si el usuario existe o no.
+     */
+    public boolean existsByIdAndName(String email, String name) {
+        return users.existsByEmailAndName(email, name);
+    }
 }

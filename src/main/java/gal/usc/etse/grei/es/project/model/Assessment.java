@@ -22,15 +22,15 @@ import java.util.StringJoiner;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Assessment {
     @Id
-    @NotNull(groups = {modifyValidation.class}, message = "no id specified")
+    @NotNull(message = "no id specified")
     private String id;
-    @Min(groups = {createValidation.class, modifyValidation.class}, value = 1, message = "must be between 1 and 5")
-    @Max(groups = {createValidation.class, modifyValidation.class}, value = 5, message = "must be between 1 and 5")
-    @NotNull(groups = {createValidation.class, modifyValidation.class}, message = "no rating specified")
+    @Min(value = 1, message = "must be between 1 and 5")
+    @Max(value = 5, message = "must be between 1 and 5")
+    @NotNull(message = "no rating specified")
     private Integer rating;
-    @NotNull(groups = {createValidation.class, modifyValidation.class}, message = "no user specified")
+    @NotNull(message = "no user specified")
     private User user;
-    @NotNull(groups = {createValidation.class, modifyValidation.class}, message = "no data specified")
+    @NotNull(message = "no data specified")
     private Film movie;
     private String comment;
 

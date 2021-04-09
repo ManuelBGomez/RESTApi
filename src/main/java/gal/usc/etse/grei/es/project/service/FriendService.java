@@ -3,7 +3,7 @@ package gal.usc.etse.grei.es.project.service;
 import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.ForbiddenActionException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
-simport gal.usc.etse.grei.es.project.errorManagement.exceptions.NoDataException;
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoDataException;
 import gal.usc.etse.grei.es.project.model.Date;
 import gal.usc.etse.grei.es.project.model.Friendship;
 import gal.usc.etse.grei.es.project.repository.FriendRepository;

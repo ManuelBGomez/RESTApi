@@ -181,9 +181,20 @@ public class MovieService {
     /**
      * Método que permite comprobar si una película existe en base a su id.
      * @param movieId El id de la película considerada.
+     * @param title El título de la película considerada.
      * @return Un booleano que indica si la película existe o no.
      */
-    public boolean existsById(String movieId){
+    public boolean existsByIdAndTitle(String movieId, String title){
+        return movies.existsByIdAndTitle(movieId, title);
+    }
+
+
+    /**
+     * Método que permite comprobar si una película existe en base a su id.
+     * @param movieId El id de la película considerada.
+     * @return Un booleano que indica si la película existe o no.
+     */
+    public boolean existsById(String movieId) {
         return movies.existsById(movieId);
     }
 }

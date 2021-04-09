@@ -51,36 +51,31 @@ public class AssessmentService {
 
     /**
      * Método que permite añadir un comentario a la película con el id especificado.
-     * @param id Identificador de la película.
      * @param assessment Datos del comentario
      * @return La información del comentario ya introducida en la base de datos.
      * @throws InvalidDataException Excepción asociada a la introducción de datos incorrectos. En este caso
      *      a una película incorrecta o un usuario inexistente.
      */
-    public Optional<Assessment> addComment(String id, Assessment assessment)
+    public Assessment addComment(Assessment assessment)
             throws InvalidDataException, AlreadyCreatedException, NoDataException {
-        //Comprobamos que la película coincide con la pasada por la uri:
-        if(!assessment.getMovie().getId().equals(id)) {
-            throw new InvalidDataException(ErrorType.INVALID_INFO, "Movie URI id and assesment movie id don't match");
-        }
 
-        //Comprobamos que la película existe:
-        if(!movies.existsById(id)){
-            throw new NoDataException(ErrorType.UNKNOWN_INFO, "The specified film does not exists");
+        //Comprobamos que la película existe (ID y titulo):
+        if(!movies.existsByIdAndTitle(assessment.getMovie().getId(), assessment.getMovie().getTitle())){
+            throw new NoDataException(ErrorType.UNKNOWN_INFO, "There is no film with the specified id and title");
         }
 
         //Comprobamos si el usuario existe:
-        if(!users.existsById(assessment.getUser().getEmail())){
-            throw new NoDataException(ErrorType.UNKNOWN_INFO, "The specified user does not exists");
+        if(!users.existsByIdAndName(assessment.getUser().getEmail(), assessment.getUser().getName())){
+            throw new NoDataException(ErrorType.UNKNOWN_INFO, "There is no user with the specified email and name.");
         }
 
         //Comprobamos si este usuario ya hizo un comentario de esa película:
-        if(assessments.existsAssessmentByMovieIdAndUserEmail(id, assessment.getUser().getEmail())){
+        if(assessments.existsAssessmentByMovieIdAndUserEmail(assessment.getMovie().getId(), assessment.getUser().getEmail())){
             throw new AlreadyCreatedException(ErrorType.EXISTING_DATA, "The specified user already has a comment in the specified film");
         }
 
         //Si llegamos a este punto, ejecutamos la inserción:
-        return Optional.of(assessments.insert(assessment));
+        return assessments.insert(assessment);
     }
 
     /**
@@ -104,7 +99,6 @@ public class AssessmentService {
     /**
      * Método que permite modificar los datos de un comentario de una película.
      *
-     * @param movieId Identificador de la película de la que se quiere modificar un comentario.
      * @param commentId Identificador del comentario a modificar.
      * @param updates Datos a cambiar del comentario.
      * @return El comentario modificado.
@@ -113,8 +107,8 @@ public class AssessmentService {
      * @throws NoDataException Excepción lanzada por no encontrarse algún dato (en este caso el comentario).
      * @throws InvalidFormatException Excepción lanzada por no pasar los datos a cambiar en el formato adecuado.
      */
-    public Optional<Assessment> modifyComment(String movieId, String commentId, List<Map<String, Object>> updates)
-            throws InvalidDataException, ForbiddenActionException, NoDataException, InvalidFormatException {
+    public Assessment modifyComment(String commentId, List<Map<String, Object>> updates)
+            throws InvalidDataException, ForbiddenActionException, NoDataException {
         //Validamos la petición realizada:
         for (Map<String, Object> update : updates) {
             //Comprobamos que el formato de la petición patch sea correcto:
@@ -151,35 +145,19 @@ public class AssessmentService {
         Assessment assessment = assessments.findById(commentId).orElseThrow(()->new NoDataException(ErrorType.UNKNOWN_INFO,
                 "No assessment with the specified id"));
 
-        if(assessment.getMovie()!=null && assessment.getMovie().getId().equals(movieId)){
-            //Aplicamos modificaciones y actualizamos:
-            return Optional.of(assessments.save(patchUtils.patch(assessment, updates)));
-        } else {
-            //Si no está asociado el comentario a la película de la URI se avisa de ello con una excepción:
-            throw new InvalidDataException(ErrorType.INVALID_INFO, "Movie URI id and assessment movie id don't match");
-        }
+        //Aplicamos modificaciones y actualizamos:
+        return assessments.save(patchUtils.patch(assessment, updates));
     }
 
     /**
      * Método que permite borrar un comentario:
-     * @param movieId El id de la película de la que se quiere eliminar un comentario.
      * @param commentId El id del comentario a borrar.
      * @throws InvalidDataException Excepción lanzada en caso de haber datos incorrectos.
      */
-    public void deleteComment(String movieId, String commentId) throws InvalidDataException, NoDataException {
-        //Comprobamos existencia de la película, del comentario y su relación:
-        if(!movies.existsById(movieId)){
-            throw new NoDataException(ErrorType.UNKNOWN_INFO, "The specified film does not exists");
-        }
-
-        //Comprobamos que el comentario existe:
-        Assessment assessment = assessments.findById(commentId).orElseThrow(()->
-                new NoDataException(ErrorType.UNKNOWN_INFO, "The specified assessment does not exists"));
-
-        //Comprobamos que el comentario está correctamente asociado a la película:
-        if(!assessment.getMovie().getId().equals(movieId)){
-            throw new InvalidDataException(ErrorType.INVALID_INFO,
-                    "The specified comment is not related with the specified film.");
+    public void deleteComment(String commentId) throws NoDataException {
+        //Comprobamos existencia del comentario:
+        if(!assessments.existsById(commentId)) {
+            throw new NoDataException(ErrorType.UNKNOWN_INFO, "The specified assessment does not exists");
         }
 
         //Si se llega a este punto, se elimina el comentario:
@@ -247,5 +225,17 @@ public class AssessmentService {
         //Recuperamos el comentario y devolvemos el usuario:
         Optional<Assessment> assessment = assessments.findById(commentId);
         return assessment.isPresent() ? assessment.get().getUser().getEmail() : "";
+    }
+
+
+    /**
+     * Método que recupera el id de la película asociada a un comentario
+     * @param commentId El id del comentario
+     * @return El id de la película asociada al comentario
+     */
+    public String getMovieId(String commentId) {
+        //Recuperamos el comentario y devolvemos el usuario:
+        Optional<Assessment> assessment = assessments.findById(commentId);
+        return assessment.isPresent() ? assessment.get().getMovie().getId() : "";
     }
 }
