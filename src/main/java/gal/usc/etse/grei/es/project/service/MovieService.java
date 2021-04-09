@@ -6,6 +6,7 @@ import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataExcept
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidFormatException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoDataException;
 import gal.usc.etse.grei.es.project.model.*;
+import gal.usc.etse.grei.es.project.repository.AssessmentRepository;
 import gal.usc.etse.grei.es.project.repository.MovieRepository;
 import gal.usc.etse.grei.es.project.utilities.PatchUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,18 +33,23 @@ public class MovieService {
     private final MongoTemplate mongoTemplate;
     //Referencia a la clase auxiliar PatchUtils:
     private final PatchUtils patchUtils;
+    //Nos vemos forzados a añadir una referencia al repositorio de películas, para evitar una referencia circular de servicios:
+    private final AssessmentRepository assessments;
 
     /**
      * Constructor de la clase
      * @param movies Referencia al MovieRepository
      * @param mongoTemplate Referencia a MongoTemplate, para la consulta de películas.
      * @param patchUtils Objeto de la clase PatchUtils, para usar en la gestión de peticiones PATCH.
+     * @param assessments Referencia al AssessmentRepository
      */
     @Autowired
-    public MovieService(MovieRepository movies, MongoTemplate mongoTemplate, PatchUtils patchUtils) {
+    public MovieService(MovieRepository movies, MongoTemplate mongoTemplate,
+                        PatchUtils patchUtils, AssessmentRepository assessments) {
         this.movies = movies;
         this.mongoTemplate = mongoTemplate;
         this.patchUtils = patchUtils;
+        this.assessments = assessments;
     }
 
     /**
@@ -164,6 +170,8 @@ public class MovieService {
         if(movies.existsById(movieId)){
             //Si existe, se borra la película:
             movies.deleteById(movieId);
+            //Borramos todos los comentarios de las películas:
+            assessments.deleteAllByMovieId(movieId);
         } else {
             //Si no, se lanza una excepción indicando que no se ha encontrado película
             throw new NoDataException(ErrorType.UNKNOWN_INFO, "No film found with the specified ID.");

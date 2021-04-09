@@ -1,6 +1,5 @@
 package gal.usc.etse.grei.es.project.controller;
 
-import gal.usc.etse.grei.es.project.model.Film;
 import gal.usc.etse.grei.es.project.model.Friendship;
 import gal.usc.etse.grei.es.project.model.validation.createValidation;
 import gal.usc.etse.grei.es.project.service.AssessmentService;
@@ -26,7 +25,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;

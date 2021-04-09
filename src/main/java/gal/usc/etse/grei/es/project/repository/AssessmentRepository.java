@@ -39,8 +39,14 @@ public interface AssessmentRepository extends MongoRepository<Assessment, String
     boolean existsAssessmentByMovieIdAndUserEmail(String movieId, String userId);
 
     /**
-     * Método que permite borrar todos comentarios del usuario con el email pasado:
+     * Método que permite borrar todos los comentarios del usuario con el email pasado:
      * @param userMail El email del usuario cuyos comentarios se borrarán
      */
     void deleteAllByUserEmail(String userMail);
+
+    /**
+     * Método que permite borrar todos los comentarios del usuario con el id pasado:
+     * @param movieId El identificador de la película cuyos comentarios se borrarán
+     */
+    void deleteAllByMovieId(String movieId);
 }

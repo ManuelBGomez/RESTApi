@@ -1,8 +1,5 @@
 package gal.usc.etse.grei.es.project.errorManagement;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.*;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.UnsupportedJwtException;
-import io.jsonwebtoken.security.SignatureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
