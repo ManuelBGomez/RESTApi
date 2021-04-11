@@ -23,7 +23,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -152,11 +151,6 @@ public class UserController {
                     .get(data.getTotalPages() - 1, size, sort, name, email)
             ).withRel(IanaLinkRelations.LAST);
 
-            //Enlace al siguiente
-            Link next = linkTo(methodOn(UserController.class)
-                    .get(metadata.next().getPageNumber(), size, sort, name, email)
-            ).withRel(IanaLinkRelations.NEXT);
-
             //Enlace al anterior (si no lo hay, al primer elemento):
             Link previous = linkTo(methodOn(UserController.class)
                     .get(metadata.previousOrFirst().getPageNumber(), size, sort, name, email)
@@ -166,15 +160,32 @@ public class UserController {
             Link one = linkTo(methodOn(UserController.class).get(null))
                     .withRel(relationProvider.getItemResourceRelFor(User.class));
 
-            //Devolvemos el resultado:
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.LINK, self.toString())
-                    .header(HttpHeaders.LINK, first.toString())
-                    .header(HttpHeaders.LINK, last.toString())
-                    .header(HttpHeaders.LINK, next.toString())
-                    .header(HttpHeaders.LINK, previous.toString())
-                    .header(HttpHeaders.LINK, one.toString())
-                    .body(data);
+            //Hacemos el enlace al siguiente (si es necesario):
+            if(metadata.next().getPageNumber() < data.getTotalPages()) {
+                //Enlace al siguiente
+                Link next = linkTo(methodOn(UserController.class)
+                        .get(metadata.next().getPageNumber(), size, sort, name, email)
+                ).withRel(IanaLinkRelations.NEXT);
+                //La respuesta contendría en ese caso todos los enlaces:
+                //Devolvemos la respuesta con todos los enlaces creados:
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.LINK, self.toString())
+                        .header(HttpHeaders.LINK, first.toString())
+                        .header(HttpHeaders.LINK, last.toString())
+                        .header(HttpHeaders.LINK, next.toString())
+                        .header(HttpHeaders.LINK, previous.toString())
+                        .header(HttpHeaders.LINK, one.toString())
+                        .body(data);
+            } else {
+                //Se devuelve la respuesta sin enlace al siguiente:
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.LINK, self.toString())
+                        .header(HttpHeaders.LINK, first.toString())
+                        .header(HttpHeaders.LINK, last.toString())
+                        .header(HttpHeaders.LINK, previous.toString())
+                        .header(HttpHeaders.LINK, one.toString())
+                        .body(data);
+            }
         }
 
         //Devolvemos la ResponseEntity not found si no se encontró nada (y no se entró al if previo):
@@ -260,8 +271,8 @@ public class UserController {
      */
     @PatchMapping(
             path = "{id}",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = "application/json-patch+json"
+            consumes = "application/json-patch+json",
+            produces = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("#id==principal")
     ResponseEntity<User> update(@PathVariable("id") String id, @RequestBody List<Map<String, Object>> updates){
@@ -329,30 +340,40 @@ public class UserController {
                     .getUserFriendships(data.getTotalPages() - 1, size, sort, id)
             ).withRel(IanaLinkRelations.LAST);
 
-            //Enlace al siguiente
-            Link next = linkTo(methodOn(UserController.class)
-                    .getUserFriendships(metadata.next().getPageNumber(), size, sort, id)
-            ).withRel(IanaLinkRelations.NEXT);
-
             //Enlace al anterior (si no lo hay, al primer elemento):
             Link previous = linkTo(methodOn(UserController.class)
                     .getUserFriendships(metadata.previousOrFirst().getPageNumber(), size, sort, id)
             ).withRel(IanaLinkRelations.PREVIOUS);
 
-            //Devolvemos el resultado:
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.LINK, self.toString())
-                    .header(HttpHeaders.LINK, first.toString())
-                    .header(HttpHeaders.LINK, last.toString())
-                    .header(HttpHeaders.LINK, next.toString())
-                    .header(HttpHeaders.LINK, previous.toString())
-                    .body(data);
+            //Hacemos el enlace al siguiente (si es necesario):
+            if(metadata.next().getPageNumber() < data.getTotalPages()) {
+                //Enlace al siguiente
+                Link next = linkTo(methodOn(UserController.class)
+                        .getUserFriendships(metadata.next().getPageNumber(), size, sort, id)
+                ).withRel(IanaLinkRelations.NEXT);
+                //La respuesta contendría en ese caso todos los enlaces:
+                //Devolvemos la respuesta con todos los enlaces creados:
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.LINK, self.toString())
+                        .header(HttpHeaders.LINK, first.toString())
+                        .header(HttpHeaders.LINK, last.toString())
+                        .header(HttpHeaders.LINK, next.toString())
+                        .header(HttpHeaders.LINK, previous.toString())
+                        .body(data);
+            } else {
+                //Se devuelve la respuesta sin enlace al siguiente:
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.LINK, self.toString())
+                        .header(HttpHeaders.LINK, first.toString())
+                        .header(HttpHeaders.LINK, last.toString())
+                        .header(HttpHeaders.LINK, previous.toString())
+                        .body(data);
+            }
         }
 
         //No hay resultado: se devuelve un estado not found:
         return ResponseEntity.notFound().build();
     }
-
 
     /**
      * Método: GET
@@ -399,23 +420,35 @@ public class UserController {
             Link last = linkTo(methodOn(UserController.class)
                     .getUserComments(data.getTotalPages() - 1, size, sort, userId)
             ).withRel(IanaLinkRelations.LAST);
-            //Enlace al siguiente
-            Link next = linkTo(methodOn(UserController.class)
-                    .getUserComments(metadata.next().getPageNumber(), size, sort, userId)
-            ).withRel(IanaLinkRelations.NEXT);
             //Enlace al anterior (si no lo hay, al primer elemento):
             Link previous = linkTo(methodOn(UserController.class)
                     .getUserComments(metadata.previousOrFirst().getPageNumber(), size, sort, userId)
             ).withRel(IanaLinkRelations.PREVIOUS);
 
-            //Se devuelve la respuesta:
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.LINK, user.toString())
-                    .header(HttpHeaders.LINK, first.toString())
-                    .header(HttpHeaders.LINK, last.toString())
-                    .header(HttpHeaders.LINK, next.toString())
-                    .header(HttpHeaders.LINK, previous.toString())
-                    .body(data);
+            //Hacemos el enlace al siguiente (si es necesario):
+            if(metadata.next().getPageNumber() < data.getTotalPages()) {
+                //Enlace al siguiente
+                Link next = linkTo(methodOn(UserController.class)
+                        .getUserComments(metadata.next().getPageNumber(), size, sort, userId)
+                ).withRel(IanaLinkRelations.NEXT);
+                //La respuesta contendría en ese caso todos los enlaces:
+                //Devolvemos la respuesta con todos los enlaces creados:
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.LINK, user.toString())
+                        .header(HttpHeaders.LINK, first.toString())
+                        .header(HttpHeaders.LINK, last.toString())
+                        .header(HttpHeaders.LINK, next.toString())
+                        .header(HttpHeaders.LINK, previous.toString())
+                        .body(data);
+            } else {
+                //Se devuelve la respuesta sin enlace al siguiente:
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.LINK, user.toString())
+                        .header(HttpHeaders.LINK, first.toString())
+                        .header(HttpHeaders.LINK, last.toString())
+                        .header(HttpHeaders.LINK, previous.toString())
+                        .body(data);
+            }
         }
 
         //Si no se encuentra resultado, se devuelve un not found:

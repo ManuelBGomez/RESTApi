@@ -59,7 +59,7 @@ public class AssessmentController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated() and principal==#assessment.user.email")
     ResponseEntity<Assessment> addComment(@RequestBody @Valid Assessment assessment){
         //Intentamos añadir el comentario:
         Assessment comment = assessments.addComment(assessment);

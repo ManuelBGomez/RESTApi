@@ -126,12 +126,6 @@ public class MovieController {
                             cast, crew, day, month, year)
             ).withRel(IanaLinkRelations.LAST);
 
-            //Enlace al siguiente
-            Link next = linkTo(methodOn(MovieController.class)
-                    .get(metadata.next().getPageNumber(), size, sort, keywords, genres, producers,
-                            cast, crew, day, month, year)
-            ).withRel(IanaLinkRelations.NEXT);
-
             //Enlace al anterior (si no lo hay, al primer elemento):
             Link previous = linkTo(methodOn(MovieController.class)
                     .get(metadata.previousOrFirst().getPageNumber(), size, sort, keywords, genres, producers,
@@ -142,15 +136,33 @@ public class MovieController {
             Link one = linkTo(methodOn(MovieController.class).get(null))
                     .withRel(relationProvider.getItemResourceRelFor(Film.class));
 
-            //Devolvemos la respuesta con todos los enlaces creados:
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.LINK, self.toString())
-                    .header(HttpHeaders.LINK, first.toString())
-                    .header(HttpHeaders.LINK, last.toString())
-                    .header(HttpHeaders.LINK, next.toString())
-                    .header(HttpHeaders.LINK, previous.toString())
-                    .header(HttpHeaders.LINK, one.toString())
-                    .body(data);
+            //Hacemos el enlace al siguiente (si es necesario):
+            if(metadata.next().getPageNumber() < data.getTotalPages()) {
+                //Enlace al siguiente
+                Link next = linkTo(methodOn(MovieController.class)
+                        .get(metadata.next().getPageNumber(), size, sort, keywords, genres, producers,
+                                cast, crew, day, month, year)
+                ).withRel(IanaLinkRelations.NEXT);
+                //La respuesta contendría en ese caso todos los enlaces:
+                //Devolvemos la respuesta con todos los enlaces creados:
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.LINK, self.toString())
+                        .header(HttpHeaders.LINK, first.toString())
+                        .header(HttpHeaders.LINK, last.toString())
+                        .header(HttpHeaders.LINK, next.toString())
+                        .header(HttpHeaders.LINK, previous.toString())
+                        .header(HttpHeaders.LINK, one.toString())
+                        .body(data);
+            } else {
+                //Se devuelve la respuesta sin enlace al siguiente:
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.LINK, self.toString())
+                        .header(HttpHeaders.LINK, first.toString())
+                        .header(HttpHeaders.LINK, last.toString())
+                        .header(HttpHeaders.LINK, previous.toString())
+                        .header(HttpHeaders.LINK, one.toString())
+                        .body(data);
+            }
         }
 
         //Si no, se devolverá un not found:
@@ -336,24 +348,33 @@ public class MovieController {
                     .getComments(data.getTotalPages() - 1, size, sort, id)
             ).withRel(IanaLinkRelations.LAST);
 
-            //Enlace al siguiente
-            Link next = linkTo(methodOn(MovieController.class)
-                    .getComments(metadata.next().getPageNumber(), size, sort, id)
-            ).withRel(IanaLinkRelations.NEXT);
-
             //Enlace al anterior (si no lo hay, al primer elemento):
             Link previous = linkTo(methodOn(MovieController.class)
                     .getComments(metadata.previousOrFirst().getPageNumber(), size, sort, id)
             ).withRel(IanaLinkRelations.PREVIOUS);
 
-            //Se devuelve la respuesta:
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.LINK, film.toString())
-                    .header(HttpHeaders.LINK, first.toString())
-                    .header(HttpHeaders.LINK, last.toString())
-                    .header(HttpHeaders.LINK, next.toString())
-                    .header(HttpHeaders.LINK, previous.toString())
-                    .body(data);
+            //Hacemos el enlace al siguiente (si es necesario):
+            if(metadata.next().getPageNumber() < data.getTotalPages()) {
+                Link next = linkTo(methodOn(MovieController.class)
+                        .getComments(metadata.next().getPageNumber(), size, sort, id)
+                ).withRel(IanaLinkRelations.NEXT);
+                //La respuesta contendría en ese caso todos los enlaces:
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.LINK, film.toString())
+                        .header(HttpHeaders.LINK, first.toString())
+                        .header(HttpHeaders.LINK, last.toString())
+                        .header(HttpHeaders.LINK, previous.toString())
+                        .header(HttpHeaders.LINK, next.toString())
+                        .body(data);
+            } else {
+                //Se devuelve la respuesta sin enlace al siguiente:
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.LINK, film.toString())
+                        .header(HttpHeaders.LINK, first.toString())
+                        .header(HttpHeaders.LINK, last.toString())
+                        .header(HttpHeaders.LINK, previous.toString())
+                        .body(data);
+            }
         }
 
         //Si no ha habido resultado, se devuelve un not found:

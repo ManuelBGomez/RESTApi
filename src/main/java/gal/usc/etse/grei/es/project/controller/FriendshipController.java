@@ -105,9 +105,10 @@ public class FriendshipController {
             //Enlace a la propia amistad:
             Link self = linkTo(methodOn(FriendshipController.class).getFriendship(res.getId()))
                     .withSelfRel();
-            //Enlace a todas las amistades de ese usuario:
+            //Enlace a todas las amistades de este usuario:
             Link all = linkTo(methodOn(UserController.class).getUserFriendships(0, 20, null,
-                    res.getUser())).withRel(relationProvider.getCollectionResourceRelFor(Friendship.class));
+                    SecurityContextHolder.getContext().getAuthentication().getName()))
+                    .withRel(relationProvider.getCollectionResourceRelFor(Friendship.class));
             //Enlace al usuario:
             Link user = linkTo(methodOn(UserController.class).get(res.getUser()))
                     .withRel(relationProvider.getItemResourceRelFor(User.class));
@@ -161,15 +162,15 @@ public class FriendshipController {
      * Permisos: únicamente el amigo que quiere confirmar.
      * Enlaces devueltos: a la propia amistad, a todas las amistades del usuario, al amigo y al propio usuario.
      *
-     * @param id El id del usuario al que alguien ha añadido como amigo.
+     * @param id El id de la amistad.
      * @return El usuario actualizado sobre la base de datos y un estado correcto si salió bien, si no, estado de error.
      */
     @PatchMapping(
             path = "{id}",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = "application/json-patch+json"
+            consumes = "application/json-patch+json",
+            produces = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("#id==principal and @friendService.hasToConfirm(#id, principal)")
+    @PreAuthorize("@friendService.hasToConfirm(#id, principal)")
     ResponseEntity<Friendship> updateFriendship(@PathVariable("id") String id,
                                                 @RequestBody List<Map<String, Object>> updates){
         //Se intenta hacer la actualización:
@@ -180,7 +181,7 @@ public class FriendshipController {
                 .withSelfRel();
         //Enlace a todas las amistades de ese usuario (EL QUE CONFIRMA):
         Link all = linkTo(methodOn(UserController.class).getUserFriendships(0, 20, null,
-                id)).withRel(relationProvider.getCollectionResourceRelFor(Friendship.class));
+                SecurityContextHolder.getContext().getAuthentication().getName())).withRel(relationProvider.getCollectionResourceRelFor(Friendship.class));
         //Enlace al usuario:
         Link user = linkTo(methodOn(UserController.class).get(friendship.getUser()))
                 .withRel(relationProvider.getItemResourceRelFor(User.class));
