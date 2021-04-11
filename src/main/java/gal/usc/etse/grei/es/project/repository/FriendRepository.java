@@ -46,10 +46,24 @@ public interface FriendRepository extends MongoRepository<Friendship, String> {
     void deleteByUserAndFriend(String user, String friend);
 
     /**
-     * Método que borra todos los comentarios en los cuales el id de usuario o del amigo coinciden con
+     * Método que borra todas las amistades en los cuales el id de usuario o del amigo coinciden con
      * el especificado.
      * @param userMail El email del usuario.
      * @param userMail1 El email del amigo.
      */
     void deleteAllByUserOrFriend(String userMail, String userMail1);
+
+    /**
+     * Método que comprueba si existe una amistad por su id y el email del usuario.
+     * @param userMail El mail del usuario.
+     * @param id El identificador de la amistad.
+     */
+    boolean existsByUserAndId(String userMail, String id);
+
+    /**
+     * Método que comprueba si existe una amistad por su id y el email del amigo.
+     * @param friendMail El mail del amigo.
+     * @param id El identificador de la amistad.
+     */
+    boolean existsByFriendAndId(String friendMail, String id);
 }

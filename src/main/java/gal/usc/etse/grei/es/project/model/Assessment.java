@@ -22,7 +22,6 @@ import java.util.StringJoiner;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Assessment {
     @Id
-    @NotNull(message = "no id specified")
     private String id;
     @Min(value = 1, message = "must be between 1 and 5")
     @Max(value = 5, message = "must be between 1 and 5")

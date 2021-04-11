@@ -19,6 +19,7 @@ import java.util.StringJoiner;
 public class Friendship {
     @Id
     private String id;
+    @NotEmpty(message = "You must specify user id")
     private String user;
     @NotEmpty(message = "You must specify friend id")
     private String friend;

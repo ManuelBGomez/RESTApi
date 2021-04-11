@@ -261,7 +261,7 @@ public class UserController {
     @PatchMapping(
             path = "{id}",
             consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE
+            produces = "application/json-patch+json"
     )
     @PreAuthorize("#id==principal")
     ResponseEntity<User> update(@PathVariable("id") String id, @RequestBody List<Map<String, Object>> updates){
@@ -278,86 +278,6 @@ public class UserController {
                 .header(HttpHeaders.LINK, self.toString())
                 .header(HttpHeaders.LINK, all.toString())
                 .body(result.get());
-    }
-
-    /**
-     * Método: POST
-     * Url para llegar: /users/{id}/friends
-     * Objetivo: añadir un amigo al usuario con los datos especificados.
-     * Permisos: única y exclusivamente el propio usuario.
-     * Enlaces devueltos: a la amistad creada y a la lista de amistades del usuario.
-     *
-     * @param id El id del usuario al cual se le quiere añadir un amigo.
-     * @param friendship Datos de la amistad.
-     * @return estado correcto en caso de encontrar al usuario y al amigo, y haber añadido dicho amigo, si no, estado
-     *          de error.
-     */
-    @PostMapping(
-            path = "{id}/friends",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    @PreAuthorize("#id==principal")
-    ResponseEntity<Friendship> addFriend(@PathVariable("id") String id,
-                                   @Valid @RequestBody Friendship friendship){
-        //Tratamos de devolver el estado adecuado si se crea la amistad:
-        Friendship inserted = friends.addFriend(id, friendship);
-        //Si el método termina correctamente, se preparan los enlaces y se devuelve un estado ok:
-        //Enlace a la propia amistad:
-        Link self = linkTo(methodOn(UserController.class).getFriendship(id, friendship.getFriend())).withSelfRel();
-        //Enlace a todas las amistades de ese usuario:
-        Link all = linkTo(methodOn(UserController.class).getUserFriendships(0, 20, null, id))
-                .withRel(relationProvider.getCollectionResourceRelFor(Friendship.class));
-        //Se devuelven los datos adecuados:
-        return ResponseEntity.created(URI.create(Constants.URL + "/users/" + inserted.getUser() + "/friends/"
-                + inserted.getFriend()))
-                .header(HttpHeaders.LINK, self.toString())
-                .header(HttpHeaders.LINK, all.toString())
-                .body(inserted);
-    }
-
-    /**
-     * Método: GET.
-     * Url para llegar: /users/{id}/friends/{friendId}
-     * Objetivo: recuperar los datos de una amistad.
-     * Permisos: únicamente los implicados en la relación de amistad.
-     * Pongo al primer usuario dado que el segundo es el amigo que corresponde.
-     * Enlaces devueltos: a la amistad, la lista de todos los amigos del usuario, al perfil del
-     *      usuario y al perfil del amigo.
-     *
-     * @param id El id de uno de los usuarios.
-     * @param friendId El id del amigo.
-     * @return Los datos de la amistad.
-     */
-    @GetMapping(
-            path = "{id}/friends/{friendId}",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    @PreAuthorize("#id==principal")
-    ResponseEntity<Friendship> getFriendship(@PathVariable("id") String id,
-                                             @PathVariable("friendId") String friendId) {
-        //Ejecutamos el método:
-        Friendship friendship = friends.getFriendship(id,friendId);
-        //Preparamos los enlaces (si hay errores, ya saltan excepciones que se manejan por otra vía):
-        //Enlace a la propia amistad:
-        Link self = linkTo(methodOn(UserController.class).getFriendship(friendship.getUser(), friendship.getFriend()))
-                .withSelfRel();
-        //Enlace a todas las amistades de ese usuario:
-        Link all = linkTo(methodOn(UserController.class).getUserFriendships(0, 20, null,
-                friendship.getUser())).withRel(relationProvider.getCollectionResourceRelFor(Friendship.class));
-        //Enlace al usuario:
-        Link user = linkTo(methodOn(UserController.class).get(friendship.getUser()))
-                .withRel(relationProvider.getItemResourceRelFor(User.class));
-        //Enlace al amigo:
-        Link friend = linkTo(methodOn(UserController.class).get(friendship.getFriend()))
-                .withRel(relationProvider.getItemResourceRelFor(User.class));
-        //Llamamos al método que corresponde para recuperar la información de la amistad.
-        return ResponseEntity.ok()
-                .header(HttpHeaders.LINK, self.toString())
-                .header(HttpHeaders.LINK, all.toString())
-                .header(HttpHeaders.LINK, user.toString())
-                .header(HttpHeaders.LINK, friend.toString())
-                .body(friendship);
     }
 
     /**
@@ -431,80 +351,6 @@ public class UserController {
 
         //No hay resultado: se devuelve un estado not found:
         return ResponseEntity.notFound().build();
-    }
-
-    /**
-     * Método: DELETE
-     * Url para llegar: /users/{id}/friends/{idFriend}
-     * Objetivo: borrar el amigo que se facilita por url, del usuario cuyo id también se facilita por url.
-     * Permisos: única y exclusivamente el propio usuario.
-     * Enlaces devueltos: a la lista de todos los amigos del usuario que hace el borrado.
-     *
-     * @param id El identificador del usuario del cual se quiere eliminar un amigo.
-     * @param idFriend El identificador del amigo que se quiere eliminar.
-     * @return Un estado noContent si se pudo hacer la eliminación, el error adecuado en caso contrario.
-     */
-    @DeleteMapping(
-            path = "{id}/friends/{idFriend}",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    @PreAuthorize("#id==principal")
-    ResponseEntity<Object> deleteFriend(@PathVariable("id") String id,
-                                      @PathVariable("idFriend") String idFriend){
-        //Se intenta hacer el borrado:
-        friends.deleteFriend(id, idFriend);
-        //Si termina el método, es que se ha borrado correctamente. Se prepara el enlace a la lista de todos los amigos
-        //del usuario.
-        Link all = linkTo(methodOn(UserController.class).getUserFriendships(0, 20, null, id))
-                .withRel(relationProvider.getCollectionResourceRelFor(Friendship.class));
-        //Si el método finaliza correctamente, se devuelve un noContent:
-        return ResponseEntity.noContent()
-                .header(HttpHeaders.LINK, all.toString())
-                .build();
-    }
-
-    /**
-     * Método: PATCH
-     * Url para llegar: /users/{id}/friends/{friendId}
-     * Objetivo: modificar la relación de amistad, de manera que se confirme la relación entre dos amigos.
-     * Permisos: únicamente el amigo que quiere confirmar.
-     * Enlaces devueltos: a la propia amistad, a todas las amistades del usuario, al amigo y al propio usuario.
-     *
-     * @param id El id del usuario al que alguien ha añadido como amigo.
-     * @param friendId El id del amigo que añadió al usuario.
-     * @param updates Las actualizaciones a realizar
-     * @return El usuario actualizado sobre la base de datos y un estado correcto si salió bien, si no, estado de error.
-     */
-    @PatchMapping(
-            path = "{id}/friends/{friendId}",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    @PreAuthorize("#id==principal and @friendService.hasToConfirm(#friendId, principal)")
-    ResponseEntity<Friendship> updateFriendship(@PathVariable("id") String id, @PathVariable("friendId") String friendId,
-                                                @RequestBody List<Map<String, Object>> updates){
-        //Se intenta hacer la actualización:
-        Friendship friendship = friends.updateFriendship(id, friendId, updates);
-        //Si finaliza correctamente el método se sigue adelante creando los enlaces necesarios.
-        //Enlace a la propia amistad:
-        Link self = linkTo(methodOn(UserController.class).getFriendship(id, friendId))
-                .withSelfRel();
-        //Enlace a todas las amistades de ese usuario (EL QUE CONFIRMA):
-        Link all = linkTo(methodOn(UserController.class).getUserFriendships(0, 20, null,
-                id)).withRel(relationProvider.getCollectionResourceRelFor(Friendship.class));
-        //Enlace al usuario:
-        Link user = linkTo(methodOn(UserController.class).get(id))
-                .withRel(relationProvider.getItemResourceRelFor(User.class));
-        //Enlace al amigo:
-        Link friend = linkTo(methodOn(UserController.class).get(friendId))
-                .withRel(relationProvider.getItemResourceRelFor(User.class));
-        //Se devuelve estado ok con todos los enlaces y datos de la amistad:
-        return ResponseEntity.ok()
-                .header(HttpHeaders.LINK, self.toString())
-                .header(HttpHeaders.LINK, all.toString())
-                .header(HttpHeaders.LINK, user.toString())
-                .header(HttpHeaders.LINK, friend.toString())
-                .body(friendship);
     }
 
 

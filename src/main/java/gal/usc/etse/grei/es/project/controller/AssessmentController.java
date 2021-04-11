@@ -17,7 +17,6 @@ import javax.validation.Valid;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
@@ -72,8 +71,7 @@ public class AssessmentController {
         Link all = linkTo(methodOn(MovieController.class).getComments(0, 20, null, comment.getMovie().getId()))
                 .withRel(relationProvider.getCollectionResourceRelFor(Assessment.class));
         //Devolvemos un estado Created con los datos del comentario añadido y los enlaces
-        return ResponseEntity.created(URI.create(Constants.URL + "/movies/" +
-                assessment.getMovie().getId() + "/comments/" + assessment.getId()))
+        return ResponseEntity.created(URI.create(Constants.URL + "/comments/" + assessment.getId()))
                 .header(HttpHeaders.LINK, film.toString())
                 .header(HttpHeaders.LINK, all.toString())
                 .body(comment);
@@ -94,7 +92,7 @@ public class AssessmentController {
     @PatchMapping(
             path = "{commentId}",
             produces = MediaType.APPLICATION_JSON_VALUE,
-            consumes = MediaType.APPLICATION_JSON_VALUE
+            consumes = "application/json-patch+json"
     )
     @PreAuthorize("@assessmentService.isUserComment(principal, #commentId)")
     ResponseEntity<Assessment> modifyComment(@PathVariable("commentId") String commentId,
@@ -129,7 +127,6 @@ public class AssessmentController {
      * Permisos: el autor del comentario o un administrador.
      * Enlaces devueltos: a la lista de comentarios de la película y a la del usuario.
      *
-     * @param movieId El id de la película de la que se quiere borrar un comentario.
      * @param commentId El comentario a borrar
      * @return Estado correcto si se borra correctamente, estado erróneo en otro caso.
      */

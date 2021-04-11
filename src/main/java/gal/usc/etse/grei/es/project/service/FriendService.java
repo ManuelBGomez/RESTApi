@@ -51,20 +51,19 @@ public class FriendService {
     /**
      * Método que permite añadir un amigo a un usuario.
      *
-     * @param userId El id del usuario a añadir.
      * @param friendship Los datos del nuevo amigo.
      * @return La relación establecida.
      * @throws InvalidDataException Excepción lanzada en caso de datos incorrectos (usuarios ya amigos).
      * @throws NoDataException Excepción lanzada en caso de datos desconocidos (usuario inexistente).
      */
-    public Friendship addFriend(String userId, Friendship friendship) throws InvalidDataException, NoDataException {
+    public Friendship addFriend(Friendship friendship) throws InvalidDataException, NoDataException {
         //Comprobamos que el usuario y el amigo no sean la misma persona:
-        if(userId.equals(friendship.getFriend())) {
+        if(friendship.getUser().equals(friendship.getFriend())) {
             throw new InvalidDataException(ErrorType.INVALID_INFO, "An user cannot be friend of himself");
         }
 
         //Comprobamos que el usuario y el amigo existan en la db. Usuario:
-        if(!users.existsById(userId)){
+        if(!users.existsById(friendship.getUser())){
             throw new NoDataException(ErrorType.UNKNOWN_INFO, "There is no user with that id");
         }
 
@@ -74,11 +73,11 @@ public class FriendService {
         }
 
         //Comprobamos si el usuario y el posible amigo ya lo son (comprobamos el recíproco también):
-        if(!friends.existsByUserAndFriend(userId, friendship.getFriend()) &&
-                !friends.existsByUserAndFriend(friendship.getFriend(),userId)) {
+        if(!friends.existsByUserAndFriend(friendship.getUser(), friendship.getFriend()) &&
+                !friends.existsByUserAndFriend(friendship.getFriend(), friendship.getUser())) {
             //Si no lo son, añadimos nuevo amigo. Para ello asociamos todos los parámetros:
             //El id y la fecha desde la que son amigos, de momento, se asegura que estén a null
-            friendship.setConfirmed(false).setUser(userId).setId(null).setSince(null);
+            friendship.setConfirmed(false).setId(null).setSince(null);
             //Guardamos los cambios y devolvemos el resultado:
             return friends.save(friendship);
         } else {
@@ -90,28 +89,12 @@ public class FriendService {
     /**
      * Método que permite recuperar los datos de una amistad.
      *
-     * @param userId Id de uno de los miembros de la amistad.
-     * @param friendId Id del otro de los miembros de la amistad.
      * @return El ID de la amistad.
      * @throws NoDataException excepción asociada a no encontrar el resultado buscado.
      */
-    public Friendship getFriendship(String userId, String friendId) throws NoDataException{
-        //Comprobamos que el usuario exista:
-        if(!users.existsById(userId)){
-            throw new NoDataException(ErrorType.UNKNOWN_INFO, "There is no user with that id");
-        }
-
-        //Comprobamos que el amigo exista:
-        if(!users.existsById(friendId)) {
-            throw new NoDataException(ErrorType.UNKNOWN_INFO, "Unknown friend id");
-        }
-
-        //Recuperamos la información de amistad: primero intentamos buscar la amistad en un sentido, luego en el otro y
-        //si no es encuentra, se lanza una excepción.
-        return friends.getByUserAndFriend(userId, friendId)
-                .orElseGet(()->friends.getByUserAndFriend(friendId,userId)
-                        .orElseThrow(()->new NoDataException(ErrorType.INVALID_INFO,
-                                "Not found friendship between that users")));
+    public Optional<Friendship> getFriendship(String id) throws NoDataException{
+        //Recuperamos la información de la amistad:
+        return friends.findById(id);
     }
 
     /**
@@ -133,44 +116,28 @@ public class FriendService {
     /**
      * Método que permite eliminar un amigo de un usuario.
      *
-     * @param userId El id del usuario.
-     * @param friendId El id del amigo a eliminar
+     * @param id El id de la amistad.
      * @throws InvalidDataException Excepción lanzada si hay incoherencias
      * @throws NoDataException Excepción lanzada si algún dato no existe (usuario, amigo).
      */
-    public void deleteFriend(String userId, String friendId) throws InvalidDataException, NoDataException {
-        //Comprobamos que el id de usuario sea válido:
-        if(!users.existsById(userId)){
+    public void deleteFriend(String id) throws NoDataException {
+        //Comprobamos que el id de la amistad sea válido:
+        if(!friends.existsById(id)){
             throw new NoDataException(ErrorType.UNKNOWN_INFO, "There is no user with that id");
-        }
-
-        //Comprobamos que exista el amigo:
-        //Comprobamos que el amigo exista:
-        if(!users.existsById(friendId)) {
-            throw new NoDataException(ErrorType.UNKNOWN_INFO, "Unknown friend id");
-        }
-
-        //Comprobamos con el nombre y el mail si los dos usuarios son amigos:
-        if(friends.existsByUserAndFriend(userId, friendId)){
-            friends.deleteByUserAndFriend(userId, friendId);
-        //Probamos en el sentido contrario:
-        } else if (friends.existsByUserAndFriend(friendId, userId)){
-            friends.deleteByUserAndFriend(friendId, userId);
-        //Si de ninguna manera son amigos, se lanza una excepción:
         } else {
-            throw new NoDataException(ErrorType.INVALID_INFO, "No friendship found between two users");
+            friends.deleteById(id);
         }
+
     }
 
     /**
      * Método que permite actualizar una amistad para confirmarla.
      *
-     * @param userId El id del usuario al que alguien ha añadido como amigo.
-     * @param friendId El id del amigo que añadió al usuario.
+     * @param friendshipId El id de la amistad
      * @param updates Las actualizaciones a realizar
      * @return El usuario actualizado sobre la base de datos.
      */
-    public Friendship updateFriendship(String userId, String friendId, List<Map<String,Object>> updates){
+    public Friendship updateFriendship(String friendshipId, List<Map<String,Object>> updates){
         //Comprobamos que sólo haya una operación y que únicamente afecte al parámetro confirmed:
         if(updates.size() != 1){
             throw new ForbiddenActionException(ErrorType.INVALID_INFO, "Only 1 modification for friendship confirmation allowed");
@@ -184,11 +151,8 @@ public class FriendService {
         //Comprobamos que se quiera cambiar el estado a confirmed:
         if(updates.get(0).get("path").equals("/confirmed") && updates.get(0).get("value").equals(true)){
             //Recuperamos la amistad del id y comprobamos que no esté confirmada.
-            //Como esta acción sólo la podrá hacer el amigo, entendemos que quien hizo la solicitud es el usuario
-            //que se pasa como friendId:
-            Friendship friendship = friends.getByUserAndFriend(friendId, userId)
-                    .orElseThrow(() -> new NoDataException(ErrorType.INVALID_INFO,
-                            "Not found friendship from " + friendId + " to " + userId + "."));
+            Friendship friendship = friends.findById(friendshipId)
+                    .orElseThrow(() -> new NoDataException(ErrorType.INVALID_INFO, "Friendship not found."));
             //A continuación, se comprueba que la solicitud este sin confirmar:
             if(!friendship.getConfirmed()){
                 friendship = patchUtils.patch(friendship, updates);
@@ -223,14 +187,14 @@ public class FriendService {
     }
 
     /**
-     * Método que permite comprobar si dos usuarios son amigos entre ellos,solamente en un sentido.
-     * @param user1 Primer usuario.
-     * @param user2 Segundo usuario.
+     * Método que permite comprobar si un usuario es el que debe confirmar una amistad dados los ids correspondientes.
+     * @param id Id de la amistad.
+     * @param friend Amigo.
      * @return True si son amigos en un sentido, falso en caso contrario.
      */
-    public Boolean hasToConfirm(String user1, String user2) {
-        //Comprobamos si los dos usuarios tienen amistad en un sentido:
-        return friends.existsByUserAndFriend(user1, user2);
+    public Boolean hasToConfirm(String id, String friend) {
+        //Comprobamos si el usuario es amigo en la amistad con el id indicado:
+        return friends.existsByFriendAndId(friend, id);
     }
 
     /**
@@ -240,5 +204,16 @@ public class FriendService {
     public void deleteAllByUserOrFriend(String userMail) {
         //Borramos todos los que tengan como usuario o como amigo a este usuario:
         friends.deleteAllByUserOrFriend(userMail, userMail);
+    }
+
+    /**
+     * Método que comprueba si un usuario pertenece a una relación de amistad.
+     * @param userId El identificador del usuario.
+     * @param friendshipId El identificador de la amistad.
+     * @return Si pertenece el usuario a la amistad.
+     */
+    public Boolean isInFriendship(String userId, String friendshipId){
+        //Comprobamos si el usuario pertenece a la amistad:
+        return friends.existsByUserAndId(userId, friendshipId) || friends.existsByFriendAndId(userId, friendshipId);
     }
 }
