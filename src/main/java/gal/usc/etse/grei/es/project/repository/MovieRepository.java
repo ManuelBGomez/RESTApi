@@ -9,12 +9,4 @@ import org.springframework.data.mongodb.repository.MongoRepository;
  *
  * @author Manuel Bendaña
  */
-public interface MovieRepository extends MongoRepository<Film, String> {
-    /**
-     * Método que permite comprobar la existencia de una película por su título e id.
-     * @param id El id de la película a comprobar.
-     * @param title El título de la película a comprobar.
-     * @return Si existe la película o no.
-     */
-    boolean existsByIdAndTitle(String id, String title);
-}
+public interface MovieRepository extends MongoRepository<Film, String> {}

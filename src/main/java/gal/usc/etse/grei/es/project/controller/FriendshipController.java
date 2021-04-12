@@ -50,7 +50,7 @@ public class FriendshipController {
      * Método: POST
      * Url para llegar: /friendships
      * Objetivo: añadir un amigo al usuario con los datos especificados.
-     * Permisos: única y exclusivamente el propio usuario.
+     * Permisos: única y exclusivamente el propio usuario - el que manda la solicitud! -.
      * Enlaces devueltos: a la amistad creada y a la lista de amistades del usuario.
      *
      * @param friendship Datos de la amistad.

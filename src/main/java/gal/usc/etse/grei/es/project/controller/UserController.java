@@ -1,7 +1,6 @@
 package gal.usc.etse.grei.es.project.controller;
 
 import gal.usc.etse.grei.es.project.model.Friendship;
-import gal.usc.etse.grei.es.project.model.validation.createValidation;
 import gal.usc.etse.grei.es.project.service.AssessmentService;
 import gal.usc.etse.grei.es.project.service.FriendshipService;
 import gal.usc.etse.grei.es.project.utilities.AuxMethods;
@@ -20,7 +19,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -294,7 +292,7 @@ public class UserController {
 
     /**
      * Método: GET.
-     * Url para llegar: /users/{id}/friends
+     * Url para llegar: /users/{id}/friendships
      * Objetivo: recuperar todos los amigos de un usuario determinado.
      * Permisos: única y exclusivamente el propio usuario.
      * Enlaces devueltos: a sí mismo y a las páginas primera, siguiente, anterior y última.
@@ -306,7 +304,7 @@ public class UserController {
      * @return La página que corresponda con los datos de los amigos.
      */
     @GetMapping(
-            path = "{id}/friends",
+            path = "{id}/friendships",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("#id==principal")

@@ -18,7 +18,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -113,7 +112,8 @@ public class AssessmentController {
         Link self = linkTo(methodOn(AssessmentController.class).modifyComment(commentId, updates)).withSelfRel();
 
         //A los comentarios de la película:
-        Link filmComments = linkTo(methodOn(MovieController.class).getComments(0, 20, null, assessment.getMovie().getId()))
+        Link filmComments = linkTo(methodOn(MovieController.class).getComments(0, 20, null,
+                assessment.getMovie().getId()))
                 .withRel(relationProvider.getCollectionResourceRelFor(Assessment.class));
 
         //A la lista de comentarios del usuario:

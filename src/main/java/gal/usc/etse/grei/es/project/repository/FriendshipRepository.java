@@ -39,13 +39,6 @@ public interface FriendshipRepository extends MongoRepository<Friendship, String
     Optional<Page<Friendship>> getAllByUserOrFriend(String user, String friend, Pageable request);
 
     /**
-     * Método que permite el borrado de una amistad por los ids de los usuarios:
-     * @param user El id de uno de los usuarios.
-     * @param friend El id del amigo.
-     */
-    void deleteByUserAndFriend(String user, String friend);
-
-    /**
      * Método que borra todas las amistades en los cuales el id de usuario o del amigo coinciden con
      * el especificado.
      * @param userMail El email del usuario.

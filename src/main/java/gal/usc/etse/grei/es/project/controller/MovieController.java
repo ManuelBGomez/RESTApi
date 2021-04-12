@@ -255,7 +255,7 @@ public class MovieController {
             consumes = "application/json-patch+json"
     )
     @PreAuthorize("hasRole('ADMIN')")
-    ResponseEntity<Film> update(@PathVariable("id") String id, @RequestBody @Valid List<Map<String, Object>> updates) {
+    ResponseEntity<Film> update(@PathVariable("id") String id, @RequestBody List<Map<String, Object>> updates) {
         //Se intenta hacer la actualización y se devuelve el resultado:
         Optional<Film> result = movies.update(id, updates);
         //A sí mismo:
