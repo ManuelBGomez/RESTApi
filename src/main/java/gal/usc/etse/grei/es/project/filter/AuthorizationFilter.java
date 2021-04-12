@@ -73,7 +73,7 @@ public class AuthorizationFilter extends BasicAuthenticationFilter {
             response.setStatus(419);
             response.getOutputStream().println(new ObjectMapper().writeValueAsString(new ErrorObject(ErrorType.EXPIRED_TOKEN,
                     "Authentication timed out.")));
-        } catch(SignatureException e){
+        } catch(MalformedJwtException | SignatureException e){
             //Si el token no es correcto, se devuelve también error (en este caso unhauthorized):
             response.setStatus(401);
             response.getOutputStream().println(new ObjectMapper().writeValueAsString(new ErrorObject(ErrorType.INVALID_TOKEN,

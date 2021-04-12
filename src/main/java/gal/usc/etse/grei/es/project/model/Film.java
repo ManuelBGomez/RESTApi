@@ -1,6 +1,7 @@
 package gal.usc.etse.grei.es.project.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import gal.usc.etse.grei.es.project.model.validation.createValidation;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -19,6 +20,7 @@ import java.util.StringJoiner;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Film {
     @Id
+    @NotEmpty(groups = {createValidation.class}, message = "Movie id must be specified")
     private String id;
     @NotEmpty(message = "You have to specify the title of the film.")
     private String title;

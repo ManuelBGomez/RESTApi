@@ -3,6 +3,7 @@ package gal.usc.etse.grei.es.project.service;
 import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.*;
 import gal.usc.etse.grei.es.project.model.Assessment;
+import gal.usc.etse.grei.es.project.model.Film;
 import gal.usc.etse.grei.es.project.model.User;
 import gal.usc.etse.grei.es.project.repository.AssessmentRepository;
 import gal.usc.etse.grei.es.project.utilities.PatchUtils;
@@ -59,13 +60,16 @@ public class AssessmentService {
     public Assessment addComment(Assessment assessment)
             throws InvalidDataException, AlreadyCreatedException, NoDataException {
 
+        //Vamos a hacer que el comentario solo contenga el id de la película (el resto de campos a null por simplicidad):
+        assessment.setMovie(new Film().setId(assessment.getMovie().getId()));
+
         //Comprobamos que la película existe (ID y titulo):
-        if(!movies.existsByIdAndTitle(assessment.getMovie().getId(), assessment.getMovie().getTitle())){
+        if(!movies.existsById(assessment.getMovie().getId())){
             throw new NoDataException(ErrorType.UNKNOWN_INFO, "There is no film with the specified id and title");
         }
 
         //Comprobamos si el usuario existe:
-        if(!users.existsByIdAndName(assessment.getUser().getEmail(), assessment.getUser().getName())){
+        if(!users.existsById(assessment.getUser().getEmail())){
             throw new NoDataException(ErrorType.UNKNOWN_INFO, "There is no user with the specified email and name.");
         }
 

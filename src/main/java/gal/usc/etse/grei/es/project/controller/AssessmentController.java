@@ -3,6 +3,8 @@ package gal.usc.etse.grei.es.project.controller;
 
 import gal.usc.etse.grei.es.project.model.Assessment;
 import gal.usc.etse.grei.es.project.model.Film;
+import gal.usc.etse.grei.es.project.model.User;
+import gal.usc.etse.grei.es.project.model.validation.createValidation;
 import gal.usc.etse.grei.es.project.service.AssessmentService;
 import gal.usc.etse.grei.es.project.utilities.Constants;
 import org.springframework.hateoas.Link;
@@ -11,6 +13,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -59,9 +64,12 @@ public class AssessmentController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("isAuthenticated() and principal==#assessment.user.email")
-    ResponseEntity<Assessment> addComment(@RequestBody @Valid Assessment assessment){
+    @PreAuthorize("isAuthenticated()")
+    ResponseEntity<Assessment> addComment(@RequestBody @Validated(createValidation.class) Assessment assessment){
         //Intentamos añadir el comentario:
+        //Se recupera la información de autenticación y se sustituye el nombre:
+        Authentication authInfo = SecurityContextHolder.getContext().getAuthentication();
+        assessment.setUser(new User().setEmail(authInfo.getName()));
         Assessment comment = assessments.addComment(assessment);
         //Preparamos enlaces para devolver
         //A la pelicula:
