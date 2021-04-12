@@ -29,7 +29,7 @@ public class AssessmentService {
     //Referencias a clases service auxiliares:
     private final MovieService movies;
     private final UserService users;
-    private final FriendService friends;
+    private final FriendshipService friends;
     //Referencia a la clase auxiliar PatchUtils:
     private final PatchUtils patchUtils;
 
@@ -42,7 +42,7 @@ public class AssessmentService {
      * @param patchUtils Objeto de la clase PatchUtils, para usar en la gestión de peticiones PATCH
      */
     public AssessmentService(AssessmentRepository assessments, MovieService movies,
-                             UserService users, FriendService friends, PatchUtils patchUtils){
+                             UserService users, FriendshipService friends, PatchUtils patchUtils){
         this.assessments = assessments;
         this.movies = movies;
         this.users = users;
@@ -54,12 +54,8 @@ public class AssessmentService {
      * Método que permite añadir un comentario a la película con el id especificado.
      * @param assessment Datos del comentario
      * @return La información del comentario ya introducida en la base de datos.
-     * @throws InvalidDataException Excepción asociada a la introducción de datos incorrectos. En este caso
-     *      a una película incorrecta o un usuario inexistente.
      */
-    public Assessment addComment(Assessment assessment)
-            throws InvalidDataException, AlreadyCreatedException, NoDataException {
-
+    public Assessment addComment(Assessment assessment) {
         //Vamos a hacer que el comentario solo contenga el id de la película (el resto de campos a null por simplicidad):
         assessment.setMovie(new Film().setId(assessment.getMovie().getId()));
 
@@ -106,13 +102,8 @@ public class AssessmentService {
      * @param commentId Identificador del comentario a modificar.
      * @param updates Datos a cambiar del comentario.
      * @return El comentario modificado.
-     * @throws InvalidDataException Excepción lanzada en caso de pasar algún parámetro incorrecto.
-     * @throws ForbiddenActionException Excepción lanzada por ejecutar alguna acción no permitida.
-     * @throws NoDataException Excepción lanzada por no encontrarse algún dato (en este caso el comentario).
-     * @throws InvalidFormatException Excepción lanzada por no pasar los datos a cambiar en el formato adecuado.
      */
-    public Assessment modifyComment(String commentId, List<Map<String, Object>> updates)
-            throws InvalidDataException, ForbiddenActionException, NoDataException {
+    public Assessment modifyComment(String commentId, List<Map<String, Object>> updates) {
         //Validamos la petición realizada:
         for (Map<String, Object> update : updates) {
             //Comprobamos que el formato de la petición patch sea correcto:
@@ -121,13 +112,13 @@ public class AssessmentService {
             }
             //Comprobamos que no se intente modificar ni el id, ni el usuario ni la película:
             if(update.get("path").equals("/user")){
-                throw new ForbiddenActionException(ErrorType.FORBIDDEN, "You cannot change user of the comment");
+                throw new InvalidFormatException(ErrorType.FORBIDDEN, "You cannot change user of the comment");
             }
             if(update.get("path").equals("/movie")){
-                throw new ForbiddenActionException(ErrorType.FORBIDDEN, "You cannot change the comment's film");
+                throw new InvalidFormatException(ErrorType.FORBIDDEN, "You cannot change the comment's film");
             }
             if(update.get("path").equals("/id")){
-                throw new ForbiddenActionException(ErrorType.FORBIDDEN, "You cannot change the comment's id");
+                throw new InvalidFormatException(ErrorType.FORBIDDEN, "You cannot change the comment's id");
             }
             //Comprobamos que el rating, si se quiere cambiar, esté entre 1 y 5:
             if(update.get("path").equals("/rating")){
@@ -156,9 +147,8 @@ public class AssessmentService {
     /**
      * Método que permite borrar un comentario:
      * @param commentId El id del comentario a borrar.
-     * @throws InvalidDataException Excepción lanzada en caso de haber datos incorrectos.
      */
-    public void deleteComment(String commentId) throws NoDataException {
+    public void deleteComment(String commentId) {
         //Comprobamos existencia del comentario:
         if(!assessments.existsById(commentId)) {
             throw new NoDataException(ErrorType.UNKNOWN_INFO, "The specified assessment does not exists");

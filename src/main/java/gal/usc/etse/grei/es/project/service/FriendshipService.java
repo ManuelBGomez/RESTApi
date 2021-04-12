@@ -1,12 +1,13 @@
 package gal.usc.etse.grei.es.project.service;
 
 import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
-import gal.usc.etse.grei.es.project.errorManagement.exceptions.ForbiddenActionException;
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.AlreadyCreatedException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
+import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidFormatException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoDataException;
 import gal.usc.etse.grei.es.project.model.Date;
 import gal.usc.etse.grei.es.project.model.Friendship;
-import gal.usc.etse.grei.es.project.repository.FriendRepository;
+import gal.usc.etse.grei.es.project.repository.FriendshipRepository;
 import gal.usc.etse.grei.es.project.repository.UserRepository;
 import gal.usc.etse.grei.es.project.utilities.PatchUtils;
 import org.springframework.data.domain.Page;
@@ -27,9 +28,9 @@ import java.util.Optional;
  * @author Manuel Bendaña
  */
 @Service
-public class FriendService {
+public class FriendshipService {
     //Referencia al repositorio de amigos
-    private final FriendRepository friends;
+    private final FriendshipRepository friends;
     //Referencia a otros servicios que serán utilizados desde éste:
     private final UserRepository users;
     //Referencia a la clase auxiliar PatchUtils:
@@ -42,7 +43,7 @@ public class FriendService {
      * @param users Referencia al userService
      * @param patchUtils Objeto de la clase PatchUtils, para usar en la gestión de peticiones PATCH.
      */
-    public FriendService(FriendRepository friends, UserRepository users, PatchUtils patchUtils) {
+    public FriendshipService(FriendshipRepository friends, UserRepository users, PatchUtils patchUtils) {
         this.friends = friends;
         this.users = users;
         this.patchUtils = patchUtils;
@@ -53,10 +54,8 @@ public class FriendService {
      *
      * @param friendship Los datos del nuevo amigo.
      * @return La relación establecida.
-     * @throws InvalidDataException Excepción lanzada en caso de datos incorrectos (usuarios ya amigos).
-     * @throws NoDataException Excepción lanzada en caso de datos desconocidos (usuario inexistente).
      */
-    public Friendship addFriend(Friendship friendship) throws InvalidDataException, NoDataException {
+    public Friendship addFriend(Friendship friendship) {
         //Comprobamos que el usuario y el amigo no sean la misma persona:
         if(friendship.getUser().equals(friendship.getFriend())) {
             throw new InvalidDataException(ErrorType.INVALID_INFO, "An user cannot be friend of himself");
@@ -90,9 +89,8 @@ public class FriendService {
      * Método que permite recuperar los datos de una amistad.
      *
      * @return El ID de la amistad.
-     * @throws NoDataException excepción asociada a no encontrar el resultado buscado.
      */
-    public Optional<Friendship> getFriendship(String id) throws NoDataException{
+    public Optional<Friendship> getFriendship(String id) {
         //Recuperamos la información de la amistad:
         return friends.findById(id);
     }
@@ -117,17 +115,14 @@ public class FriendService {
      * Método que permite eliminar un amigo de un usuario.
      *
      * @param id El id de la amistad.
-     * @throws InvalidDataException Excepción lanzada si hay incoherencias
-     * @throws NoDataException Excepción lanzada si algún dato no existe (usuario, amigo).
      */
-    public void deleteFriend(String id) throws NoDataException {
+    public void deleteFriend(String id) {
         //Comprobamos que el id de la amistad sea válido:
         if(!friends.existsById(id)){
             throw new NoDataException(ErrorType.UNKNOWN_INFO, "There is no user with that id");
         } else {
             friends.deleteById(id);
         }
-
     }
 
     /**
@@ -140,7 +135,7 @@ public class FriendService {
     public Friendship updateFriendship(String friendshipId, List<Map<String,Object>> updates){
         //Comprobamos que sólo haya una operación y que únicamente afecte al parámetro confirmed:
         if(updates.size() != 1){
-            throw new ForbiddenActionException(ErrorType.INVALID_INFO, "Only 1 modification for friendship confirmation allowed");
+            throw new InvalidFormatException(ErrorType.INVALID_INFO, "Only 1 modification for friendship confirmation allowed");
         }
 
         //Comprobamos el formato:
@@ -167,11 +162,11 @@ public class FriendService {
                 return friends.save(friendship);
             } else {
                 //Si la amistad ya está confirmada, se indica:
-                throw new InvalidDataException(ErrorType.INVALID_INFO, "Friendship is already confirmed.");
+                throw new AlreadyCreatedException(ErrorType.ALREADY_MODIFIED, "Friendship is already confirmed.");
             }
         } else {
             //Si se intenta modificar otro parámetro, se indica:
-            throw new ForbiddenActionException(ErrorType.FORBIDDEN, "Only 1 modification for friendship confirmation allowed");
+            throw new InvalidFormatException(ErrorType.FORBIDDEN, "Only 1 modification for friendship confirmation allowed");
         }
     }
 

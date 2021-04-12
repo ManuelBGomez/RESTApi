@@ -58,16 +58,6 @@ public class Handler extends ResponseEntityExceptionHandler {
     }
 
     /**
-     * Manejador de la excepción ForbiddenActionException
-     * @param exception La excepción lanzada.
-     * @return Un estado de error Forbidden.
-     */
-    @ExceptionHandler(ForbiddenActionException.class)
-    public ResponseEntity<ErrorObject> handle(ForbiddenActionException exception){
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(exception.getErrorObject());
-    }
-
-    /**
      * Manejador de la excepción InvalidDataException
      * @param exception La excepción lanzada.
      * @return Un estado de error Bad Request.

@@ -1,7 +1,6 @@
 package gal.usc.etse.grei.es.project.service;
 
 import gal.usc.etse.grei.es.project.errorManagement.ErrorType;
-import gal.usc.etse.grei.es.project.errorManagement.exceptions.ForbiddenActionException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidDataException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.InvalidFormatException;
 import gal.usc.etse.grei.es.project.errorManagement.exceptions.NoDataException;
@@ -116,9 +115,8 @@ public class MovieService {
      * Método que permite insertar una nueva película en la base de datos.
      * @param movie Los datos de la película a insertar.
      * @return Los datos de la película una vez insertados, incluyendo el id.
-     * @throws InvalidDataException Excepción lanzada en caso de que se facilite alguna información incorrecta.
      */
-    public Optional<Film> create(Film movie) throws InvalidDataException {
+    public Optional<Film> create(Film movie) {
         //Comprobamos que la película haya llegado sin un id:
         if(movie.getId() == null || movie.getId().isEmpty()){
             //Si es así, se devuelve un optional con los datos de la película insertada.
@@ -135,12 +133,8 @@ public class MovieService {
      * @param id El identificador de la película en cuestión.
      * @param updates Las modificaciones a realizar.
      * @return La película una vez actualizada en la Base de Datos.
-     * @throws InvalidDataException Excepción lanzada en caso de que haya información incorrecta.
-     * @throws NoDataException Excepción lanzada en caso de que no se encuentre película con el id.
-     * @throws InvalidFormatException Excepción lanzada en caso de que pasar modificaciones en formato erróneo.
      */
-    public Optional<Film> update(String id, List<Map<String, Object>> updates)
-            throws InvalidDataException, NoDataException, InvalidFormatException, ForbiddenActionException {
+    public Optional<Film> update(String id, List<Map<String, Object>> updates) {
         for (Map<String, Object> update : updates) {
             //Comprobamos que el formato de la petición patch sea correcto:
             if (update.get("op") == null || update.get("path") == null || update.get("value") == null) {
@@ -148,7 +142,7 @@ public class MovieService {
             }
             //Comprobamos que no se modifique el id:
             if(update.get("path").equals("/id")){
-                throw new ForbiddenActionException(ErrorType.FORBIDDEN, "You cannot change the comment's id");
+                throw new InvalidFormatException(ErrorType.FORBIDDEN, "You cannot change the comment's id");
             }
         }
 
@@ -163,9 +157,8 @@ public class MovieService {
     /**
      * Método que permite borrar la película con el id especificado.
      * @param movieId El identificador de la película a borrar
-     * @throws NoDataException Excepción lanzada en caso de haber problemas en el borrado.
      */
-    public void delete(String movieId) throws NoDataException {
+    public void delete(String movieId) {
         //Se comprueba si existe la película que se quiere borrar:
         if(movies.existsById(movieId)){
             //Si existe, se borra la película:
@@ -177,17 +170,6 @@ public class MovieService {
             throw new NoDataException(ErrorType.UNKNOWN_INFO, "No film found with the specified ID.");
         }
     }
-
-    /**
-     * Método que permite comprobar si una película existe en base a su id.
-     * @param movieId El id de la película considerada.
-     * @param title El título de la película considerada.
-     * @return Un booleano que indica si la película existe o no.
-     */
-    public boolean existsByIdAndTitle(String movieId, String title){
-        return movies.existsByIdAndTitle(movieId, title);
-    }
-
 
     /**
      * Método que permite comprobar si una película existe en base a su id.

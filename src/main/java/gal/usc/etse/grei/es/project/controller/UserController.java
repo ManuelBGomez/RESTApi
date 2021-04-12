@@ -3,7 +3,7 @@ package gal.usc.etse.grei.es.project.controller;
 import gal.usc.etse.grei.es.project.model.Friendship;
 import gal.usc.etse.grei.es.project.model.validation.createValidation;
 import gal.usc.etse.grei.es.project.service.AssessmentService;
-import gal.usc.etse.grei.es.project.service.FriendService;
+import gal.usc.etse.grei.es.project.service.FriendshipService;
 import gal.usc.etse.grei.es.project.utilities.AuxMethods;
 import gal.usc.etse.grei.es.project.utilities.Constants;
 import gal.usc.etse.grei.es.project.model.Assessment;
@@ -40,7 +40,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 public class UserController {
     private final UserService users;
     private final AssessmentService assessments;
-    private final FriendService friends;
+    private final FriendshipService friends;
     //Referencia a un linkrelationprovider para los hateoas
     private final LinkRelationProvider relationProvider;
 
@@ -54,7 +54,7 @@ public class UserController {
      */
     @Autowired
     public UserController(UserService users, AssessmentService assessments,
-                          FriendService friends, LinkRelationProvider relationProvider){
+                          FriendshipService friends, LinkRelationProvider relationProvider){
         this.users = users;
         this.assessments = assessments;
         this.friends = friends;
@@ -75,7 +75,7 @@ public class UserController {
             path = "{id}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("hasRole('ADMIN') or #id == principal or @friendService.areFriends(#id, principal)")
+    @PreAuthorize("hasRole('ADMIN') or #id == principal or @friendshipService.areFriends(#id, principal)")
     ResponseEntity<User> get(@PathVariable("id") String id) {
         //Hacemos la consulta:
         Optional<User> result = users.get(id);
@@ -392,7 +392,7 @@ public class UserController {
             path = "{id}/comments",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("hasRole('ADMIN') or #userId ==principal or @friendService.areFriends(#userId, principal)")
+    @PreAuthorize("hasRole('ADMIN') or #userId ==principal or @friendshipService.areFriends(#userId, principal)")
     ResponseEntity<Page<Assessment>> getUserComments(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size,

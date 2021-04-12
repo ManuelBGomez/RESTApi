@@ -27,7 +27,7 @@ public class UserService {
     private final UserRepository users;
     private final AssessmentRepository assessments; //Usamos esto para evitar una dependencia circular.
     //Referencia a las clases servicio auxiliares:
-    private final FriendService friends;
+    private final FriendshipService friends;
     //Referencia a la clase auxiliar PatchUtils:
     private final PatchUtils patchUtils;
     //Referencia al PasswordEncoder:
@@ -44,7 +44,7 @@ public class UserService {
      */
     @Autowired
     public UserService(UserRepository users, PatchUtils patchUtils, PasswordEncoder encoder,
-                       FriendService friends, AssessmentRepository assessments){
+                       FriendshipService friends, AssessmentRepository assessments){
         this.users = users;
         this.patchUtils = patchUtils;
         this.encoder = encoder;
@@ -106,9 +106,8 @@ public class UserService {
      *
      * @param user EL usuario que se quiere crear.
      * @return Los datos del usuario, una vez ya insertado.
-     * @throws AlreadyCreatedException excepción lanzada en caso de que el usuario estuviese creado.
      */
-    public Optional<User> create(User user) throws AlreadyCreatedException {
+    public Optional<User> create(User user) {
         //Comprobamos si existe ya un usuario con el email pasado:
         if(users.existsById(user.getEmail())) {
             //Si ya existe, lanzamos una excepción:
@@ -131,9 +130,8 @@ public class UserService {
      * Método que permite borrar un usuario.
      *
      * @param userMail El email del usuario que se quiere borrar (es su identificador)
-     * @throws NoDataException Excepción asociada a la no existencia del usuario que se quiere borrar.
      */
-    public void delete(String userMail) throws NoDataException {
+    public void delete(String userMail){
         //Comprobamos que el usuario existe:
         if(users.existsById(userMail)){
             //Se borra el usuario en caso de que existiese:
@@ -154,13 +152,8 @@ public class UserService {
      * @param id El identificador del usuario a actualizar.
      * @param updates Actualizaciones a realizar.
      * @return Los datos modificados, ya guardados en la base de datos.
-     * @throws InvalidDataException Excepción lanzada si hay algo incorrecto.
-     * @throws NoDataException Excepción lanzada si no se encuentra al usuario.
-     * @throws ForbiddenActionException Excepción lanzada en caso de que haya una acción prohibida efectuada.
-     * @throws InvalidFormatException Excepción lanzada si se pasa información en un formato incorrecto.
      */
-    public Optional<User> update(String id, List<Map<String, Object>> updates)
-            throws InvalidDataException, NoDataException, InvalidFormatException, ForbiddenActionException {
+    public Optional<User> update(String id, List<Map<String, Object>> updates) {
         //Comprobamos que ninguna operación afecte al parámetro email o birthday:
         for (Map<String, Object> update : updates) {
             //Comprobamos también que el formato sea correcto:
@@ -168,13 +161,13 @@ public class UserService {
                 throw new InvalidDataException(ErrorType.INVALID_INFO, "You must specify operation, path and value");
             }
             if(update.get("path").equals("/email")){
-                throw new ForbiddenActionException(ErrorType.FORBIDDEN, "You cannot change the email of the user");
+                throw new InvalidFormatException(ErrorType.FORBIDDEN, "You cannot change the email of the user");
             }
             if(update.get("path").equals("/birthday")) {
-                throw new ForbiddenActionException(ErrorType.FORBIDDEN, "You cannot change the user's birthday");
+                throw new InvalidFormatException(ErrorType.FORBIDDEN, "You cannot change the user's birthday");
             }
             if(update.get("path").equals("/roles")) {
-                throw new ForbiddenActionException(ErrorType.FORBIDDEN, "You cannot change the user's roles");
+                throw new InvalidFormatException(ErrorType.FORBIDDEN, "You cannot change the user's roles");
             }
         }
 
@@ -194,15 +187,5 @@ public class UserService {
      */
     public boolean existsById(String userId){
         return users.existsById(userId);
-    }
-
-    /**
-     * Método que comprueba si un usuario existe en base a su id y su nombre
-     * @param email El id del posible usuario
-     * @param name El nombre del posible usuario
-     * @return Un booleano que indica si el usuario existe o no.
-     */
-    public boolean existsByIdAndName(String email, String name) {
-        return users.existsByEmailAndName(email, name);
     }
 }

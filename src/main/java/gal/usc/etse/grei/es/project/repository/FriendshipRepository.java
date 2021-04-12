@@ -13,7 +13,7 @@ import java.util.Optional;
  *
  * @author Manuel Bendaña
  */
-public interface FriendRepository extends MongoRepository<Friendship, String> {
+public interface FriendshipRepository extends MongoRepository<Friendship, String> {
     /**
      * Método que permite comprobar si existe una amistad por los ids del usuario.
      * @param user El id del usuario

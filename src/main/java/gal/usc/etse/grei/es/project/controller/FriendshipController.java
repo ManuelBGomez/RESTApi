@@ -2,7 +2,7 @@ package gal.usc.etse.grei.es.project.controller;
 
 import gal.usc.etse.grei.es.project.model.Friendship;
 import gal.usc.etse.grei.es.project.model.User;
-import gal.usc.etse.grei.es.project.service.FriendService;
+import gal.usc.etse.grei.es.project.service.FriendshipService;
 import gal.usc.etse.grei.es.project.utilities.Constants;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.LinkRelationProvider;
@@ -31,7 +31,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 @RestController
 @RequestMapping("friendships")
 public class FriendshipController {
-    private final FriendService friends;
+    private final FriendshipService friends;
     //Referencia a un linkrelationprovider para los hateoas
     private final LinkRelationProvider relationProvider;
 
@@ -41,7 +41,7 @@ public class FriendshipController {
      * @param friends Instrancia de la clase FriendService
      * @param relationProvider Instancia de la clase LinkRelationProvider
      */
-    public FriendshipController(FriendService friends, LinkRelationProvider relationProvider) {
+    public FriendshipController(FriendshipService friends, LinkRelationProvider relationProvider) {
         this.friends = friends;
         this.relationProvider = relationProvider;
     }
@@ -95,7 +95,7 @@ public class FriendshipController {
             path = "{id}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("@friendService.isInFriendship(principal, #id)")
+    @PreAuthorize("@friendshipService.isInFriendship(principal, #id)")
     ResponseEntity<Friendship> getFriendship(@PathVariable("id") String id) {
         //Ejecutamos el método:
         Optional<Friendship> friendship = friends.getFriendship(id);
@@ -140,7 +140,7 @@ public class FriendshipController {
             path = "{id}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("@friendService.isInFriendship(principal, #id)")
+    @PreAuthorize("@friendshipService.isInFriendship(principal, #id)")
     ResponseEntity<Object> deleteFriend(@PathVariable("id") String id){
         //Se intenta hacer el borrado:
         friends.deleteFriend(id);
@@ -170,7 +170,7 @@ public class FriendshipController {
             consumes = "application/json-patch+json",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("@friendService.hasToConfirm(#id, principal)")
+    @PreAuthorize("@friendshipService.hasToConfirm(#id, principal)")
     ResponseEntity<Friendship> updateFriendship(@PathVariable("id") String id,
                                                 @RequestBody List<Map<String, Object>> updates){
         //Se intenta hacer la actualización:
