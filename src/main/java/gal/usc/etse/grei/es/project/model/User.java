@@ -1,8 +1,6 @@
 package gal.usc.etse.grei.es.project.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import gal.usc.etse.grei.es.project.model.validation.createValidation;
-import gal.usc.etse.grei.es.project.model.validation.friendValidation;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -24,17 +22,17 @@ import java.util.StringJoiner;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class User {
     @Id
-    @NotEmpty(groups = {createValidation.class, friendValidation.class}, message = "no email specified")
-    @Email(groups = {createValidation.class, friendValidation.class}, message = "incorrect format")
+    @NotEmpty(message = "no email specified")
+    @Email(message = "incorrect format")
     private String email;
-    @NotEmpty(groups = {createValidation.class, friendValidation.class}, message = "no name specified")
+    @NotEmpty(message = "no name specified")
     private String name;
     private String country;
     private String picture;
     @Valid
-    @NotNull(groups = {createValidation.class}, message = "no birthday specified")
+    @NotNull(message = "no birthday specified")
     private Date birthday;
-    @NotEmpty(groups = {createValidation.class}, message = "no password specified")
+    @NotEmpty(message = "no password specified")
     private String password;
     private List<String> roles;
 

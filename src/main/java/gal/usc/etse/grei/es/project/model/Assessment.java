@@ -2,10 +2,8 @@ package gal.usc.etse.grei.es.project.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import gal.usc.etse.grei.es.project.model.validation.createValidation;
-import gal.usc.etse.grei.es.project.model.validation.modifyValidation;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Max;

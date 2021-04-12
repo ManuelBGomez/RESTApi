@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import javax.validation.Valid;
 import java.util.Objects;
 import java.util.StringJoiner;
 
@@ -21,7 +22,9 @@ public class Person {
     private String country;
     private String picture;
     private String biography;
+    @Valid
     private Date birthday;
+    @Valid
     private Date deathday;
 
     public Person() {

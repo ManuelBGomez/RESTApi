@@ -1,8 +1,6 @@
 package gal.usc.etse.grei.es.project.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import gal.usc.etse.grei.es.project.model.validation.createValidation;
-import gal.usc.etse.grei.es.project.model.validation.modifyValidation;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
@@ -18,15 +16,15 @@ import java.util.StringJoiner;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Date {
-    @NotNull(groups = {createValidation.class}, message = "no birthday day specified")
-    @Min(groups = {createValidation.class, modifyValidation.class}, value = 1, message = "must be between 1 and 31")
-    @Max(groups = {createValidation.class, modifyValidation.class}, value = 31, message = "must be between 1 and 31")
+    @NotNull(message = "no birthday day specified")
+    @Min(value = 1, message = "must be between 1 and 31")
+    @Max(value = 31, message = "must be between 1 and 31")
     private Integer day;
-    @NotNull(groups = {createValidation.class}, message = "no birthday month specified")
-    @Min(groups = {createValidation.class, modifyValidation.class}, value = 1, message = "must be between 1 and 12")
-    @Max(groups = {createValidation.class, modifyValidation.class}, value = 12, message = "must be between 1 and 12")
+    @NotNull(message = "no birthday month specified")
+    @Min(value = 1, message = "must be between 1 and 12")
+    @Max(value = 12, message = "must be between 1 and 12")
     private Integer month;
-    @NotNull(groups = {createValidation.class}, message = "no birthday year specified")
+    @NotNull(message = "no birthday year specified")
     private Integer year;
 
     public Date() {

@@ -5,6 +5,7 @@ import gal.usc.etse.grei.es.project.model.validation.createValidation;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.Objects;
@@ -28,10 +29,13 @@ public class Film {
     private String tagline;
     private Collection collection;
     private List<String> genres;
+    @Valid
     private Date releaseDate;
     private List<String> keywords;
     private List<Producer> producers;
+    @Valid
     private List<Crew> crew;
+    @Valid
     private List<Cast> cast;
     private List<Resource> resources;
     private Long budget;

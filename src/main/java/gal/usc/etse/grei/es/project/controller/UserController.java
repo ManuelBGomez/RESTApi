@@ -23,6 +23,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -207,7 +208,7 @@ public class UserController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<User> create(@Validated(createValidation.class) @RequestBody User user){
+    ResponseEntity<User> create(@Valid @RequestBody User user){
         //Se intenta crear el usuario:
         Optional<User> inserted = users.create(user);
         //Si se llega aquí es que se ha finalizado el método. Devolveremos referencia al propio
