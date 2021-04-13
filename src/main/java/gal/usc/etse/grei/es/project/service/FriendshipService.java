@@ -208,6 +208,8 @@ public class FriendshipService {
      * @return Si pertenece el usuario a la amistad.
      */
     public Boolean isInFriendship(String userId, String friendshipId){
+        //Comprobamos existencia de la amistad
+        if(!friends.existsById(friendshipId)) throw new NoDataException(ErrorType.UNKNOWN_INFO, "No friendship found with that ID");
         //Comprobamos si el usuario pertenece a la amistad:
         return friends.existsByUserAndId(userId, friendshipId) || friends.existsByFriendAndId(userId, friendshipId);
     }

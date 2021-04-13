@@ -58,7 +58,15 @@ public class UserService {
      * @return Los datos del usuario con el id facilitado
      */
     public Optional<User> get(String id){
-        return users.findById(id);
+        Optional<User> result = users.findById(id);
+        if(result.isPresent()){
+            //Evitamos mostrar contraseña y roles:
+            result.get().setPassword(null).setRoles(null);
+            return result;
+        } else {
+            //Si no se encuentra nada, se devuelve un empty:
+            return Optional.empty();
+        }
     }
 
     /**
