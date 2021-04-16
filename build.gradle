@@ -21,12 +21,13 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     implementation 'io.jsonwebtoken:jjwt-api:0.11.2'
     implementation 'org.springframework.boot:spring-boot-starter-hateoas'
-    runtime 'io.jsonwebtoken:jjwt-impl:0.11.2'
-    runtime 'io.jsonwebtoken:jjwt-jackson:0.11.2'
+    implementation 'org.springdoc:springdoc-openapi-ui:1.5.6'
+    runtimeOnly('io.jsonwebtoken:jjwt-impl:0.11.2')
+    runtimeOnly('io.jsonwebtoken:jjwt-jackson:0.11.2')
 }
 
 bootJar {
-    classifier = 'boot'
+    archiveClassifier.set('boot')
 }
 
 
