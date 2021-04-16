@@ -10,6 +10,7 @@ import gal.usc.etse.grei.es.project.model.Friendship;
 import gal.usc.etse.grei.es.project.repository.FriendshipRepository;
 import gal.usc.etse.grei.es.project.repository.UserRepository;
 import gal.usc.etse.grei.es.project.utilities.PatchUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -43,6 +44,7 @@ public class FriendshipService {
      * @param users Referencia al userService
      * @param patchUtils Objeto de la clase PatchUtils, para usar en la gestión de peticiones PATCH.
      */
+    @Autowired
     public FriendshipService(FriendshipRepository friends, UserRepository users, PatchUtils patchUtils) {
         this.friends = friends;
         this.users = users;

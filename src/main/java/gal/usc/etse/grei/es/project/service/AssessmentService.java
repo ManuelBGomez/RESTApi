@@ -7,6 +7,7 @@ import gal.usc.etse.grei.es.project.model.Film;
 import gal.usc.etse.grei.es.project.model.User;
 import gal.usc.etse.grei.es.project.repository.AssessmentRepository;
 import gal.usc.etse.grei.es.project.utilities.PatchUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -41,6 +42,7 @@ public class AssessmentService {
      * @param friends Referencia al servicio de amigos
      * @param patchUtils Objeto de la clase PatchUtils, para usar en la gestión de peticiones PATCH
      */
+    @Autowired
     public AssessmentService(AssessmentRepository assessments, MovieService movies,
                              UserService users, FriendshipService friends, PatchUtils patchUtils){
         this.assessments = assessments;

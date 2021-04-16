@@ -7,6 +7,7 @@ import gal.usc.etse.grei.es.project.model.User;
 import gal.usc.etse.grei.es.project.model.validation.createValidation;
 import gal.usc.etse.grei.es.project.service.AssessmentService;
 import gal.usc.etse.grei.es.project.utilities.Constants;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.LinkRelationProvider;
 import org.springframework.http.HttpHeaders;
@@ -44,6 +45,7 @@ public class AssessmentController {
      * @param assessments Referencia al servicio de comentarios.
      * @param relationProvider Referencia al objeto LinkRelationProvider
      */
+    @Autowired
     public AssessmentController(AssessmentService assessments, LinkRelationProvider relationProvider) {
         this.assessments = assessments;
         this.relationProvider = relationProvider;

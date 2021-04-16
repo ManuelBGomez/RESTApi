@@ -9,6 +9,9 @@ import io.swagger.v3.oas.annotations.info.License;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.servers.Server;
 
+
+
+
 /**
  * Clase OpenAPIConfiguration: contiene la definición de la API que se usará
  * para describir la misma en la documentación.
@@ -37,6 +40,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
         name = "JWT",
         scheme = "bearer",
         type = SecuritySchemeType.HTTP,
-        in = SecuritySchemeIn.HEADER)
+        in = SecuritySchemeIn.HEADER
+)
 public class OpenAPIConfiguration {
 }

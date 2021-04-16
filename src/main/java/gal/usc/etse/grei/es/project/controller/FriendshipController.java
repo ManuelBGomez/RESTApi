@@ -4,6 +4,7 @@ import gal.usc.etse.grei.es.project.model.Friendship;
 import gal.usc.etse.grei.es.project.model.User;
 import gal.usc.etse.grei.es.project.service.FriendshipService;
 import gal.usc.etse.grei.es.project.utilities.Constants;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.LinkRelationProvider;
 import org.springframework.http.HttpHeaders;
@@ -41,6 +42,7 @@ public class FriendshipController {
      * @param friends Instrancia de la clase FriendService
      * @param relationProvider Instancia de la clase LinkRelationProvider
      */
+    @Autowired
     public FriendshipController(FriendshipService friends, LinkRelationProvider relationProvider) {
         this.friends = friends;
         this.relationProvider = relationProvider;

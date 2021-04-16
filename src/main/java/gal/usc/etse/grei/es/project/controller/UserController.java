@@ -1,5 +1,6 @@
 package gal.usc.etse.grei.es.project.controller;
 
+import gal.usc.etse.grei.es.project.errorManagement.ErrorObject;
 import gal.usc.etse.grei.es.project.model.Friendship;
 import gal.usc.etse.grei.es.project.service.AssessmentService;
 import gal.usc.etse.grei.es.project.service.FriendshipService;
@@ -8,6 +9,17 @@ import gal.usc.etse.grei.es.project.utilities.Constants;
 import gal.usc.etse.grei.es.project.model.Assessment;
 import gal.usc.etse.grei.es.project.model.User;
 import gal.usc.etse.grei.es.project.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +48,8 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
  */
 @RestController
 @RequestMapping("users")
+@Tag(name = "User API", description = "User related operations")
+@SecurityRequirement(name = "JWT")
 public class UserController {
     private final UserService users;
     private final AssessmentService assessments;
@@ -75,7 +89,41 @@ public class UserController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("hasRole('ADMIN') or #id == principal or @friendshipService.areFriends(#id, principal)")
-    ResponseEntity<User> get(@PathVariable("id") String id) {
+    @Operation(
+            operationId = "getOneUser",
+            summary = "Get a single user details",
+            description = "Get the details for a given user. To see those details, " +
+                    "you must be the requested user, his friend or have admin permissions."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The user details",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = User.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "User not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Not enough privileges",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Bad token",
+                    content = @Content
+            )
+    })
+    ResponseEntity<User> get(@Parameter(name = "id", example = "user@mail.com") @PathVariable("id") String id) {
         //Hacemos la consulta:
         Optional<User> result = users.get(id);
 
@@ -117,11 +165,42 @@ public class UserController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("isAuthenticated()")
+    @Operation(
+            operationId = "getUsers",
+            summary = "Get details from multiple users",
+            description = "Get the details for some users, using different filters. To get them, " +
+                    "you must be authenticated."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Users details",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Page.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Not enough privileges",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Bad token",
+                    content = @Content
+            )
+    })
     ResponseEntity<Page<User>> get(
+            @Parameter(name = "page", description = "Page number to get", example = "1")
             @RequestParam(name = "page", defaultValue = "0") int page,
+            @Parameter(name = "size", description = "Size of the page", example = "15")
             @RequestParam(name = "size", defaultValue = "20") int size,
+            @Parameter(name = "sort", description = "Sort criteria", example = "+name")
             @RequestParam(name = "sort", defaultValue = "") List<String> sort,
+            @Parameter(name = "name", description = "User name for filter", example = "Test")
             @RequestParam(name = "name", required = false) String name,
+            @Parameter(name = "email", description = "User email for filter", example = "test@test.com")
             @RequestParam(name = "email", required = false) String email
     ) {
         //Recuperamos los criterios de ordenación:
@@ -206,7 +285,53 @@ public class UserController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<User> create(@Valid @RequestBody User user){
+    @Operation(
+            operationId = "createUser",
+            summary = "Create a new user",
+            description = "Create a new user by introducing his information. Anybody can do this operation."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Correctly created",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = User.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid format of user",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "The email specified belongs to an existing user",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            )
+    })
+    @SecurityRequirements(value = {})
+    ResponseEntity<User> create(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "User data for creation",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"email\": \"test@test.com\"," +
+                                            "\"password\": \"test\"," +
+                                            "\"birthday\": {\"day\": 1, \"month\": 1, \"year\": 2000}," +
+                                            "\"name\": \"Test\" }"
+                            )
+                    )
+            )
+            @Valid @RequestBody User user
+    ){
         //Se intenta crear el usuario:
         Optional<User> inserted = users.create(user);
         //Si se llega aquí es que se ha finalizado el método. Devolveremos referencia al propio
@@ -240,7 +365,38 @@ public class UserController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("#id == principal")
+    @Operation(
+            operationId = "deleteUser",
+            summary = "Delete an user by id",
+            description = "Delete the user that corresponds to the specified id. To do this, you must be " +
+                    "the requested user."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Correctly deleted user"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "User not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Not enough privileges",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Bad token",
+                    content = @Content
+            )
+    })
     ResponseEntity<Object> delete(
+                @Parameter(name = "id", description = "User id (email)", example = "test@test.com")
                 @PathVariable("id") String id
             ) {
         //Se intenta borrar el usuario:
