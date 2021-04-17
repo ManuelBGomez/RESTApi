@@ -31,6 +31,8 @@ public class AuxMethods {
         AuxMethods.sortDate(sortAux, "-releaseDate");
         AuxMethods.sortDate(sortAux, "+birthday");
         AuxMethods.sortDate(sortAux, "-birthday");
+        AuxMethods.sortDate(sortAux, "+since");
+        AuxMethods.sortDate(sortAux, "-since");
 
         //Elaboramos la lista que se devolverá como resultado:
         return sortAux.stream().map(string -> {

@@ -177,6 +177,10 @@ public class UserService {
             if(update.get("path").equals("/roles")) {
                 throw new InvalidFormatException(ErrorType.FORBIDDEN, "You cannot change the user's roles");
             }
+            //Se encirpta la contraseña (en caso de introducirla):
+            if(update.get("path").equals("/password")) {
+                update.replace("value", encoder.encode(update.get("value").toString()));
+            }
         }
 
         //Hecho esto, recuperamos el usuario con el id pasado (si existe):

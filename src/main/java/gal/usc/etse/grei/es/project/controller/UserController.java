@@ -120,7 +120,10 @@ public class UserController {
             @ApiResponse(
                     responseCode = "401",
                     description = "Bad token",
-                    content = @Content
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
             )
     })
     ResponseEntity<User> get(@Parameter(name = "id", example = "user@mail.com") @PathVariable("id") String id) {
@@ -188,7 +191,10 @@ public class UserController {
             @ApiResponse(
                     responseCode = "401",
                     description = "Bad token",
-                    content = @Content
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
             )
     })
     ResponseEntity<Page<User>> get(
@@ -392,7 +398,10 @@ public class UserController {
             @ApiResponse(
                     responseCode = "401",
                     description = "Bad token",
-                    content = @Content
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
             )
     })
     ResponseEntity<Object> delete(
@@ -430,7 +439,66 @@ public class UserController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("#id==principal")
-    ResponseEntity<User> update(@PathVariable("id") String id, @RequestBody List<Map<String, Object>> updates){
+    @Operation(
+            operationId = "updateUser",
+            summary = "Update information from a specified user",
+            description = "Update data of an user given by its id. The updates will be specified in JsonPatch format, and" +
+                    "you must be the requested user to do it."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Correct format, modifications managed.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = User.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "422",
+                    description = "Invalid format of json patch",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "User not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Not enough privileges",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Bad token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            )
+    })
+    ResponseEntity<User> update(
+            @Parameter(name = "id", description = "User id (email)", example = "test@test.com")
+            @PathVariable("id") String id,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Modifications to user list",
+                    content = @Content(
+                            mediaType = "application/json-patch+json",
+                            examples = @ExampleObject(
+                                    value = "[{\"op\": \"replace\", \"path\": \"/name\", \"value\": \"Test\"}, " +
+                                            "\t{\"op\": \"add\", \"path\": \"/country\", \"value\": \"Spain\"}]"
+                            )
+                    )
+            )
+            @RequestBody List<Map<String, Object>> updates
+    ){
         //Intentamos hacer la actualización:
         Optional<User> result = users.update(id, updates);
         //Si el método termina correctamente, se preparan los enlaces y se devuelve un estado ok:
@@ -464,10 +532,43 @@ public class UserController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("#id==principal")
+    @Operation(
+            operationId = "getUserFriendships",
+            summary = "Get details of all user friendships",
+            description = "Get details of all friendships for a given user. To see them, you " +
+                    "must be the requested user."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "User friendships correctly given",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Page.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Not enough privileges",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Bad token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            )
+    })
     ResponseEntity<Page<Friendship>> getUserFriendships(
+            @Parameter(name = "page", description = "Page number to get", example = "1")
             @RequestParam(name = "page", defaultValue = "0") int page,
+            @Parameter(name = "size", description = "Size of the page", example = "15")
             @RequestParam(name = "size", defaultValue = "20") int size,
+            @Parameter(name = "sort", description = "Sort criteria", example = "+since")
             @RequestParam(name = "sort", defaultValue = "") List<String> sort,
+            @Parameter(name = "email", description = "User email", example = "test@test.com")
             @PathVariable("id") String id
     ) {
         //Recuperamos criterios de ordenación:
@@ -547,11 +648,44 @@ public class UserController {
             path = "{id}/comments",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @Operation(
+            operationId = "getUserComments",
+            summary = "Get all coments from an user",
+            description = "Get details from all the coments for a given user. To see them, you must have admin " +
+                    "permissions, be the requested user or be one of his friends."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "User comments correctly given",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Page.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Not enough privileges",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Bad token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            )
+    })
     @PreAuthorize("hasRole('ADMIN') or #userId ==principal or @friendshipService.areFriends(#userId, principal)")
     ResponseEntity<Page<Assessment>> getUserComments(
+            @Parameter(name = "page", description = "Page number to get", example = "1")
             @RequestParam(name = "page", defaultValue = "0") int page,
+            @Parameter(name = "size", description = "Size of the page", example = "15")
             @RequestParam(name = "size", defaultValue = "20") int size,
+            @Parameter(name = "sort", description = "Sort criteria", example = "-comment")
             @RequestParam(name = "sort", defaultValue = "") List<String> sort,
+            @Parameter(name = "email", description = "User email", example = "test@test.com")
             @PathVariable("id") String userId
     ) {
         //Se recuperan los criterios de ordenación:
