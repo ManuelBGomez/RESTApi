@@ -124,6 +124,14 @@ public class UserController {
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorObject.class)
                     )
+            ),
+            @ApiResponse(
+                    responseCode = "419",
+                    description = "Token Expired",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
             )
     })
     ResponseEntity<User> get(@Parameter(name = "id", example = "user@mail.com") @PathVariable("id") String id) {
@@ -177,11 +185,7 @@ public class UserController {
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
-                    description = "Users details",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = Page.class)
-                    )
+                    description = "Users details"
             ),
             @ApiResponse(
                     responseCode = "403",
@@ -191,6 +195,14 @@ public class UserController {
             @ApiResponse(
                     responseCode = "401",
                     description = "Bad token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "419",
+                    description = "Token Expired",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorObject.class)
@@ -402,6 +414,14 @@ public class UserController {
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorObject.class)
                     )
+            ),
+            @ApiResponse(
+                    responseCode = "419",
+                    description = "Token Expired",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
             )
     })
     ResponseEntity<Object> delete(
@@ -442,7 +462,7 @@ public class UserController {
     @Operation(
             operationId = "updateUser",
             summary = "Update information from a specified user",
-            description = "Update data of an user given by its id. The updates will be specified in JsonPatch format, and" +
+            description = "Update data of an user given by its id. The updates will be specified in JsonPatch format, and " +
                     "you must be the requested user to do it."
     )
     @ApiResponses({
@@ -478,6 +498,14 @@ public class UserController {
             @ApiResponse(
                     responseCode = "401",
                     description = "Bad token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "419",
+                    description = "Token Expired",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorObject.class)
@@ -541,11 +569,7 @@ public class UserController {
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
-                    description = "User friendships correctly given",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = Page.class)
-                    )
+                    description = "User friendships correctly given"
             ),
             @ApiResponse(
                     responseCode = "403",
@@ -555,6 +579,14 @@ public class UserController {
             @ApiResponse(
                     responseCode = "401",
                     description = "Bad token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "419",
+                    description = "Token Expired",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorObject.class)
@@ -657,11 +689,7 @@ public class UserController {
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
-                    description = "User comments correctly given",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = Page.class)
-                    )
+                    description = "User comments correctly given"
             ),
             @ApiResponse(
                     responseCode = "403",
@@ -675,9 +703,17 @@ public class UserController {
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorObject.class)
                     )
+            ),
+            @ApiResponse(
+                    responseCode = "419",
+                    description = "Token Expired",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
             )
     })
-    @PreAuthorize("hasRole('ADMIN') or #userId ==principal or @friendshipService.areFriends(#userId, principal)")
+    @PreAuthorize("hasRole('ADMIN') or #userId == principal or @friendshipService.areFriends(#userId, principal)")
     ResponseEntity<Page<Assessment>> getUserComments(
             @Parameter(name = "page", description = "Page number to get", example = "1")
             @RequestParam(name = "page", defaultValue = "0") int page,

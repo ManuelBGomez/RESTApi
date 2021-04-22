@@ -1,11 +1,21 @@
 package gal.usc.etse.grei.es.project.controller;
 
+import gal.usc.etse.grei.es.project.errorManagement.ErrorObject;
 import gal.usc.etse.grei.es.project.service.AssessmentService;
 import gal.usc.etse.grei.es.project.utilities.AuxMethods;
 import gal.usc.etse.grei.es.project.utilities.Constants;
 import gal.usc.etse.grei.es.project.model.Assessment;
 import gal.usc.etse.grei.es.project.model.Film;
 import gal.usc.etse.grei.es.project.service.MovieService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,6 +45,8 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
  * @author Manuel Bendaña
  */
 @RestController
+@Tag(name = "Movie API", description = "Movie related operations")
+@SecurityRequirement(name="JWT")
 @RequestMapping("movies")
 public class MovieController {
     //Referencia a la clase MovieService:
@@ -83,17 +95,61 @@ public class MovieController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("isAuthenticated()")
+    @Operation(
+            operationId = "getAllMovies",
+            summary = "Get all movies details",
+            description = "Get all the details for all movies,  using diferent filters and pageable. To get " +
+                    "them, you must be authenticated."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Movies details"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Not enough privileges",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Bad token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "419",
+                    description = "Token Expired",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            )
+    })
     ResponseEntity<Page<Film>> get(
+            @Parameter(name = "page", description = "Page number to get", example = "1")
             @RequestParam(name = "page", defaultValue = "0") int page,
+            @Parameter(name = "size", description = "Size of the page", example = "15")
             @RequestParam(name = "size", defaultValue = "20") int size,
+            @Parameter(name = "sort", description = "Sort criteria", example = "+releaseDate")
             @RequestParam(name = "sort", defaultValue = "") List<String> sort,
+            @Parameter(name = "keywords", description = "Movie keywords to perform search", example = "deathcore")
             @RequestParam(name = "keywords", required = false) List<String> keywords,
+            @Parameter(name = "genres", description = "Movie genres to perform search", example = "action")
             @RequestParam(name = "genres", required = false) List<String> genres,
+            @Parameter(name = "producers", description = "Movie producer names to perform search", example = "International")
             @RequestParam(name = "producers", required = false) List<String> producers,
+            @Parameter(name = "cast", description = "Movie cast member names to perform search", example = "Alan Tang")
             @RequestParam(name = "cast", required = false) List<String> cast,
+            @Parameter(name = "crew", description = "Movie crew member names to perform search", example = "Yang Tao")
             @RequestParam(name = "crew", required = false) List<String> crew,
+            @Parameter(name = "releaseDate.day", description = "Day of month of the releaseDate to perform search", example = "21")
             @RequestParam(name = "releaseDate.day", required = false) Integer day,
+            @Parameter(name = "releaseDate.month", description = "Month of the releaseDate to perform search", example = "1")
             @RequestParam(name = "releaseDate.month", required = false) Integer month,
+            @Parameter(name = "releaseDate.year", description = "Year of the releaseDate to perform search", example = "2021")
             @RequestParam(name = "releaseDate.year", required = false) Integer year
     ) {
         //Transformamos la lista de criterios pasada como argumento para que puedan ser procesados en la consulta:
@@ -184,7 +240,48 @@ public class MovieController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("isAuthenticated()")
-    ResponseEntity<Film> get(@PathVariable("id") String id) {
+    @Operation(
+            operationId = "getOneMovie",
+            summary = "Get details of one movie",
+            description = "Get all the details from one movie given by its id. To get them, " +
+                    "you must be authenticated."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The movie details"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Movie not found",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Not enough privileges",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Bad token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "419",
+                    description = "Token Expired",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            )
+    })
+    ResponseEntity<Film> get(
+            @Parameter(name="id", description = "The id of the movie to fetch", example="744687")
+            @PathVariable("id") String id
+    ) {
         //Tratamos de recuperar la película:
         Optional<Film> result = movies.get(id);
         if(result.isPresent()){
@@ -219,7 +316,67 @@ public class MovieController {
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("hasRole('ADMIN')")
-    ResponseEntity<Film> create(@Valid @RequestBody Film movie) {
+    @Operation(
+            operationId = "createMovie",
+            summary = "Create new movie",
+            description = "Create a new movie introducing his information. To create it, "+
+                    "you must have admin permissions."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Movie created",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Film.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid format of movie",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Not enough privileges",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Bad token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "419",
+                    description = "Token Expired",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            )
+    })
+    ResponseEntity<Film> create(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Movie data for creation",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"title\":\"Película de ejemplo\"," +
+                                            "\"overview\":\"Descripción detallada\"," +
+                                            "\"releaseDate\": {\"day\": 21,\"month\": 1,\"year\": 2021}," +
+                                            "\"crew\":[{\"name\": \"J. J. Hopkins\",\"birthday\": " +
+                                                    "{\"day\": 12,\"month\": 12,\"year\": 1997}}]}"
+                            )
+                    )
+            )
+            @Valid @RequestBody Film movie
+    ) {
         //Tratamos de crear la película:
         Optional<Film> inserted = movies.create(movie);
         //Si se crea correctamente, devolvemos la información de la película creada.
@@ -255,7 +412,73 @@ public class MovieController {
             consumes = "application/json-patch+json"
     )
     @PreAuthorize("hasRole('ADMIN')")
-    ResponseEntity<Film> update(@PathVariable("id") String id, @RequestBody List<Map<String, Object>> updates) {
+    @Operation(
+            operationId = "updateMovie",
+            summary = "Update movie information",
+            description = "Update information of a movie given by its id. To be allowed to do this, "+
+                    "you must have admin permissions."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Updated movie correctly",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Film.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Bad token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Not enough privileges",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Movie not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "419",
+                    description = "Token Expired",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "422",
+                    description = "Invalid format of json patch",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            )
+    })
+    ResponseEntity<Film> update(
+            @Parameter(name = "id", description = "Movie to update id", example = "744687")
+            @PathVariable("id") String id,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Modifications to movie list",
+                    content = @Content(
+                            mediaType = "application/json-patch+json",
+                            examples = @ExampleObject(
+                                    value = "[{\"op\": \"add\", \"path\": \"/releaseDate\", \"value\": {\"day\": 12, \"month\": 12, \"year\": 2021}}]"
+                            )
+                    )
+            )
+            @RequestBody List<Map<String, Object>> updates
+    ) {
         //Se intenta hacer la actualización y se devuelve el resultado:
         Optional<Film> result = movies.update(id, updates);
         //A sí mismo:
@@ -286,7 +509,52 @@ public class MovieController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("hasRole('ADMIN')")
-    ResponseEntity<Object> delete(@PathVariable("id") String id){
+    @Operation(
+            operationId = "deleteMovie",
+            summary = "Delete one movie by id",
+            description = "Delete all movie information using its id. To be allowed to do this, "+
+                    "you must have admin permissions."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Deleted movie correctly",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Bad token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Not enough privileges",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Movie not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "419",
+                    description = "Token Expired",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            )
+    })
+    ResponseEntity<Object> delete(
+            @Parameter(name = "id", description = "Movie to delete id", example = "744687")
+            @PathVariable("id") String id
+    ){
         //Se trata de borrar la película con el id especificado:
         movies.delete(id);
         //Se prepara el único enlace a devolver, el de todas las películas:
@@ -318,10 +586,50 @@ public class MovieController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("isAuthenticated()")
+    @Operation(
+            operationId = "getMovieComments",
+            summary = "Get all movie comments",
+            description = "Get all comments that different users made of a movie specified by its id. To get this " +
+                    "information, you must be authenticated. Results are pageable."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Get comments details"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Bad token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Movie or its comments not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "419",
+                    description = "Token Expired",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            )
+    })
     ResponseEntity<Page<Assessment>> getComments(
+            @Parameter(name = "page", description = "Page number to get", example = "0")
             @RequestParam(name = "page", defaultValue = "0") int page,
+            @Parameter(name = "size", description = "Size of the page", example = "10")
             @RequestParam(name = "size", defaultValue = "20") int size,
+            @Parameter(name = "sort", description = "Sort criteria", example = "+comment")
             @RequestParam(name = "sort", defaultValue = "") List<String> sort,
+            @Parameter(name="id", description = "Movie id which comments will be retrieved", example="744687")
             @PathVariable("id") String id
     ) {
         //Transformamos la lista de criterios pasada como argumento para que puedan ser procesados en la consulta:
@@ -380,6 +688,4 @@ public class MovieController {
         //Si no ha habido resultado, se devuelve un not found:
         return ResponseEntity.notFound().build();
     }
-
-
 }
