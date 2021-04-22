@@ -1,12 +1,22 @@
 package gal.usc.etse.grei.es.project.controller;
 
 
+import gal.usc.etse.grei.es.project.errorManagement.ErrorObject;
 import gal.usc.etse.grei.es.project.model.Assessment;
 import gal.usc.etse.grei.es.project.model.Film;
 import gal.usc.etse.grei.es.project.model.User;
 import gal.usc.etse.grei.es.project.model.validation.createValidation;
 import gal.usc.etse.grei.es.project.service.AssessmentService;
 import gal.usc.etse.grei.es.project.utilities.Constants;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.LinkRelationProvider;
@@ -33,6 +43,8 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
  * @author Manuel Bendaña
  */
 @RestController
+@Tag(name = "Comments API", description = "User comments related operations")
+@SecurityRequirement(name = "JWT")
 @RequestMapping("comments")
 public class AssessmentController {
 
@@ -66,7 +78,82 @@ public class AssessmentController {
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("isAuthenticated()")
-    ResponseEntity<Assessment> addComment(@RequestBody @Validated(createValidation.class) Assessment assessment){
+    @Operation(
+            operationId = "createComment",
+            summary = "Create a new comment for a movie",
+            description = "Create a new comment for any movie. All authenticated users will have permissions to do this," +
+                    " but only one comment per user in every movie is allowed."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Comment created correctly",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Assessment.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request format in some parameters",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Bad token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Not enough privileges",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Movie or user not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "The requested user already made a comment for the requested movie",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "419",
+                    description = "Token Expired",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            )
+    })
+    ResponseEntity<Assessment> addComment(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Comment data for creation",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"rating\": \"5\"," +
+                                            "\"user\":{\"email\": \"test@test.com\"}," +
+                                            "\"movie\":{\"id\": \"99968\"}," +
+                                            "\"comment\": \"Test comment!\"}"
+                            )
+                    )
+            )
+            @RequestBody @Validated(createValidation.class) Assessment assessment
+    ){
         //Intentamos añadir el comentario:
         //Se recupera la información de autenticación y se sustituye el nombre:
         Authentication authInfo = SecurityContextHolder.getContext().getAuthentication();
@@ -104,13 +191,86 @@ public class AssessmentController {
             consumes = "application/json-patch+json"
     )
     @PreAuthorize("@assessmentService.isUserComment(principal, #commentId)")
-    ResponseEntity<Assessment> modifyComment(@PathVariable("commentId") String commentId,
-                                             @RequestBody List<Map<String, Object>> updates){
+    @Operation(
+            operationId = "updateComment",
+            summary = "Update comment information",
+            description = "Update comment for a movie, giving its id and requested modifications in jsonPatch format." +
+                    " Only the comment author will be allowed to update its comment."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Comment updated correctly",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Assessment.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request format in some parameters",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Bad token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Not enough privileges",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Comment not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "419",
+                    description = "Token Expired",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "422",
+                    description = "Invalid format of json patch",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            )
+    })
+    ResponseEntity<Assessment> modifyComment(
+            @Parameter(name = "id", description = "Comment to modify id", example = "607416fb7e2a243f8c0c6c0c")
+            @PathVariable("commentId") String commentId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Modifications to movie list",
+                    content = @Content(
+                            mediaType = "application/json-patch+json",
+                            examples = @ExampleObject(
+                                    value = "[{\"op\": \"replace\", \"path\": \"/rating\", \"value\": 5}]"
+                            )
+                    )
+            )
+            @RequestBody List<Map<String, Object>> updates
+    ){
         //Se intenta hacer la actualización y se devuelve el resultado:
         Assessment assessment = assessments.modifyComment(commentId, updates);
 
         //Se elaboran los enlaces:
-        //A si mismo
+        //A si mismo:
         Link self = linkTo(methodOn(AssessmentController.class).modifyComment(commentId, updates)).withSelfRel();
 
         //A los comentarios de la película:
@@ -144,8 +304,53 @@ public class AssessmentController {
             path = "{commentId}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
+    @Operation(
+            operationId = "deleteComment",
+            summary = "Delete comment by id",
+            description = "Delete a comment made by an user for a movie, giving its id." +
+                    " Only the comment author and users with admin permissions will be allowed to do this."
+    )
     @PreAuthorize("hasRole('ADMIN') or @assessmentService.isUserComment(principal, #commentId)")
-    ResponseEntity<Object> deleteComment(@PathVariable("commentId") String commentId){
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Comment deleted correctly",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Bad token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Not enough privileges",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Comment not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "419",
+                    description = "Token Expired",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            )
+    })
+    ResponseEntity<Object> deleteComment(
+            @Parameter(name = "id", description = "Comment to delete id", example = "607416fb7e2a243f8c0c6c0c")
+            @PathVariable("commentId") String commentId
+    ){
         //Recuperamos el usuario y la película antes (para luego poder devolver los enlaces):
         String user = assessments.getUserId(commentId);
         String movieId = assessments.getMovieId(commentId);

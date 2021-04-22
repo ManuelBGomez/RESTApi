@@ -606,6 +606,11 @@ public class MovieController {
                     )
             ),
             @ApiResponse(
+                    responseCode = "403",
+                    description = "Not enough privileges",
+                    content = @Content
+            ),
+            @ApiResponse(
                     responseCode = "404",
                     description = "Movie or its comments not found",
                     content = @Content(

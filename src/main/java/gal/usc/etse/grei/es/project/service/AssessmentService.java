@@ -61,14 +61,14 @@ public class AssessmentService {
         //Vamos a hacer que el comentario solo contenga el id de la película (el resto de campos a null por simplicidad):
         assessment.setMovie(new Film().setId(assessment.getMovie().getId()));
 
-        //Comprobamos que la película existe (ID y titulo):
+        //Comprobamos que la película existe:
         if(!movies.existsById(assessment.getMovie().getId())){
-            throw new NoDataException(ErrorType.UNKNOWN_INFO, "There is no film with the specified id and title");
+            throw new NoDataException(ErrorType.UNKNOWN_INFO, "There is no film with the specified id");
         }
 
         //Comprobamos si el usuario existe:
         if(!users.existsById(assessment.getUser().getEmail())){
-            throw new NoDataException(ErrorType.UNKNOWN_INFO, "There is no user with the specified email and name.");
+            throw new NoDataException(ErrorType.UNKNOWN_INFO, "There is no user with the specified email.");
         }
 
         //Comprobamos si este usuario ya hizo un comentario de esa película:
