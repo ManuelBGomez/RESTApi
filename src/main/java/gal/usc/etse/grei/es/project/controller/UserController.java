@@ -475,7 +475,7 @@ public class UserController {
             ),
             @ApiResponse(
                     responseCode = "422",
-                    description = "Invalid format of json patch",
+                    description = "Invalid format of JSON patch",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorObject.class)

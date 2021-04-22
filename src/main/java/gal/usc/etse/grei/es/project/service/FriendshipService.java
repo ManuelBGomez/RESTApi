@@ -83,7 +83,7 @@ public class FriendshipService {
             return friends.save(friendship);
         } else {
             //Si ya lo son, se manda una excepción:
-            throw new InvalidDataException(ErrorType.INVALID_INFO, "Both users already are friends");
+            throw new AlreadyCreatedException(ErrorType.EXISTING_DATA, "Both users already are friends");
         }
     }
 
