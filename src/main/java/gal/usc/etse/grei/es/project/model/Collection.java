@@ -1,6 +1,7 @@
 package gal.usc.etse.grei.es.project.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,8 +13,10 @@ import java.util.StringJoiner;
  *
  * Elaborada estructura por los profesores de la materia.
  */
+@Schema(description="Representation of resource collection")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Collection {
+    @Schema(example = "Example")
     private String name;
     private List<Resource> resources = new ArrayList<>();
 

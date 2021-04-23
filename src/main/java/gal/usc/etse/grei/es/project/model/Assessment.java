@@ -2,6 +2,7 @@ package gal.usc.etse.grei.es.project.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import gal.usc.etse.grei.es.project.model.validation.createValidation;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -18,6 +19,7 @@ import java.util.StringJoiner;
  * Elaborada estructura por los profesores de la materia.
  * Etiquetas sobre los atributos hechas por Manuel Bendaña.
  */
+@Schema(description="Representation of a comment made by an user for a movie and his rating")
 @Document(collection = "comments")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Assessment {
@@ -25,6 +27,7 @@ public class Assessment {
     //que se inserta un id en la película (por defecto se requeriría el título, pero en este caso hace falta el id).
     @Id
     private String id;
+    @Schema(example = "2")
     @Min(groups = {createValidation.class}, value = 1, message = "must be between 1 and 5")
     @Max(groups = {createValidation.class}, value = 5, message = "must be between 1 and 5")
     @NotNull(groups = {createValidation.class}, message = "no rating specified")
@@ -34,6 +37,7 @@ public class Assessment {
     @Valid
     @NotNull(groups = {createValidation.class}, message = "no movie specified")
     private Film movie;
+    @Schema(example = "Good movie!")
     private String comment;
 
     public Assessment() { }

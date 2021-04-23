@@ -1,6 +1,7 @@
 package gal.usc.etse.grei.es.project.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -10,8 +11,10 @@ import java.util.StringJoiner;
  *
  * Elaborada estructura por los profesores de la materia.
  */
+@Schema(description="Representation of a crew member from a movie")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Crew extends Person{
+    @Schema(example = "Director")
     private String job;
 
     public Crew() {

@@ -1,6 +1,7 @@
 package gal.usc.etse.grei.es.project.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -10,9 +11,12 @@ import java.util.StringJoiner;
  *
  * Elaborada estructura por los profesores de la materia.
  */
+@Schema(description="Representation of a resource")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Resource {
+    @Schema(example = "https://placekitten.com/200/287")
     private String url;
+    @Schema(example = "POSTER")
     private ResourceType type;
 
     public Resource(ResourceType type, String url) {

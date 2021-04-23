@@ -1,6 +1,7 @@
 package gal.usc.etse.grei.es.project.errorManagement;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 import java.util.Objects;
@@ -11,13 +12,17 @@ import java.util.Objects;
  *
  * @author Manuel Bendaña
  */
+@Schema(description="Representation of an error returned with an Http client error status code")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorObject {
     //Tipo de error: clase Enum.
+    @Schema(example = "INVALID_INFO")
     private ErrorType errorType;
     //Descripción del error.
+    @Schema(example = "Error description")
     private String description;
     //Detalle de errores
+    @Schema(example = "Detail 1: explanation")
     private List<String> errorDetails;
 
     /**

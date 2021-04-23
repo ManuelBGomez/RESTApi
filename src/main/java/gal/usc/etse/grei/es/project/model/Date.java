@@ -1,6 +1,7 @@
 package gal.usc.etse.grei.es.project.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
@@ -15,15 +16,19 @@ import java.util.StringJoiner;
  * Etiquetas sobre los atributos hechas por Manuel Bendaña.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Schema(description="Representation of a date")
 public class Date {
+    @Schema(minimum = "1", maximum = "31", example = "12")
     @NotNull(message = "no birthday day specified")
     @Min(value = 1, message = "must be between 1 and 31")
     @Max(value = 31, message = "must be between 1 and 31")
     private Integer day;
+    @Schema(minimum = "1", maximum = "12", example = "4")
     @NotNull(message = "no birthday month specified")
     @Min(value = 1, message = "must be between 1 and 12")
     @Max(value = 12, message = "must be between 1 and 12")
     private Integer month;
+    @Schema(example = "1984")
     @NotNull(message = "no birthday year specified")
     private Integer year;
 

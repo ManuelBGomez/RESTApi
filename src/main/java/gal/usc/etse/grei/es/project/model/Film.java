@@ -2,6 +2,7 @@ package gal.usc.etse.grei.es.project.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import gal.usc.etse.grei.es.project.model.validation.createValidation;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -18,19 +19,25 @@ import java.util.StringJoiner;
  * Etiquetas sobre los atributos hechas por Manuel Bendaña.
  */
 @Document(collection = "films")
+@Schema(description="Representation of a movie")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Film {
     @Id
     @NotEmpty(groups = {createValidation.class}, message = "Movie id must be specified")
     private String id;
+    @Schema(example = "Sample Title")
     @NotEmpty(message = "You have to specify the title of the film.")
     private String title;
+    @Schema(example = "This is a sample overview")
     private String overview;
+    @Schema(example = "Sample tagline")
     private String tagline;
     private Collection collection;
+    @Schema(example = "Drama, Action")
     private List<String> genres;
     @Valid
     private Date releaseDate;
+    @Schema(example = "family")
     private List<String> keywords;
     private List<Producer> producers;
     @Valid
@@ -38,9 +45,13 @@ public class Film {
     @Valid
     private List<Cast> cast;
     private List<Resource> resources;
+    @Schema(example = "10000")
     private Long budget;
+    @Schema(example = "RUMORED")
     private Status status;
+    @Schema(example = "20000")
     private Integer runtime;
+    @Schema(example = "50000")
     private Long revenue;
 
     public Film() { }

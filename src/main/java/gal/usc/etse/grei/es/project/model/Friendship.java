@@ -1,6 +1,7 @@
 package gal.usc.etse.grei.es.project.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -14,15 +15,19 @@ import java.util.StringJoiner;
  *
  * Elaborada por los profesores de la materia. Anotaciones de Manuel Bendaña.
  */
+@Schema(description="Representation of a friendship relation between two users")
 @Document(collection = "friends")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Friendship {
     @Id
     private String id;
     @NotEmpty(message = "You must specify user id")
+    @Schema(example = "test1@test.com")
     private String user;
     @NotEmpty(message = "You must specify friend id")
+    @Schema(example = "test2@test.com")
     private String friend;
+    @Schema(example = "true")
     private Boolean confirmed;
     private Date since;
 

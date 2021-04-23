@@ -1,6 +1,7 @@
 package gal.usc.etse.grei.es.project.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -18,22 +19,29 @@ import java.util.StringJoiner;
  * Elaborada estructura por los profesores de la materia.
  * Etiquetas sobre los atributos hechas por Manuel Bendaña.
  */
+@Schema(description="Representation of an user")
 @Document(collection = "users")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class User {
     @Id
     @NotEmpty(message = "no email specified")
     @Email(message = "incorrect format")
+    @Schema(example = "test@test.com")
     private String email;
+    @Schema(example = "Paco Pérez")
     @NotEmpty(message = "no name specified")
     private String name;
+    @Schema(example = "Spain")
     private String country;
+    @Schema(example = "https://placekitten.com/200/287")
     private String picture;
     @Valid
     @NotNull(message = "no birthday specified")
     private Date birthday;
+    @Schema(example = "12345678")
     @NotEmpty(message = "no password specified")
     private String password;
+    @Schema(example = "ROLE_USER")
     private List<String> roles;
 
     public User() {}

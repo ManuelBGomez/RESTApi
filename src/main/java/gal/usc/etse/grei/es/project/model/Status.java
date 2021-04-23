@@ -1,8 +1,12 @@
 package gal.usc.etse.grei.es.project.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Tipo enum Status, representa el estado de una película.
  */
+@Schema(description = "Possible status for a film",
+        allowableValues = {"RUMORED", "PLANNED", "PRODUCTION", "POSTPRODUCTION", "RELEASED", "CANCELLED"})
 public enum Status {
     RUMORED, PLANNED, PRODUCTION, POSTPRODUCTION, RELEASED, CANCELLED;
 

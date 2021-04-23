@@ -1,6 +1,7 @@
 package gal.usc.etse.grei.es.project.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -11,9 +12,13 @@ import java.util.StringJoiner;
  * Elaborada estructura por los profesores de la materia.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Schema(description="Representation of a movie producer")
 public class Producer {
+    @Schema(example = "Producers SL")
     private String name;
+    @Schema(example = "https://placekitten.com/200/287")
     private String logo;
+    @Schema(example = "UK")
     private String country;
 
     public Producer() {
