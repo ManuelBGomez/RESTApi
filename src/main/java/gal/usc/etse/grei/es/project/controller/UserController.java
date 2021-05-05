@@ -352,6 +352,7 @@ public class UserController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("permitAll()")
     @Operation(
             operationId = "createUser",
             summary = "Create a new user",
