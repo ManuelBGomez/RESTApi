@@ -10,6 +10,7 @@ import gal.usc.etse.grei.es.project.service.AssessmentService;
 import gal.usc.etse.grei.es.project.utilities.Constants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -91,7 +92,24 @@ public class AssessmentController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = Assessment.class)
-                    )
+                    ),
+                    headers = {
+                            @Header(
+                                    name = "Film of the comment",
+                                    description = "HATEOAS Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "All comments",
+                                    description = "HATEOAS All Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Created comment",
+                                    description = "Created comment location",
+                                    schema = @Schema(type = "Location")
+                            )
+                    }
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -194,7 +212,7 @@ public class AssessmentController {
     @Operation(
             operationId = "updateComment",
             summary = "Update comment information",
-            description = "Update comment for a movie, giving its id and requested modifications in jsonPatch format." +
+            description = "Update comment for a movie, giving its id via url and the requested modifications in jsonPatch format." +
                     " Only the comment author will be allowed to update its comment."
     )
     @ApiResponses({
@@ -204,7 +222,24 @@ public class AssessmentController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = Assessment.class)
-                    )
+                    ),
+                    headers = {
+                            @Header(
+                                    name = "Self comment",
+                                    description = "HATEOAS Self Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Film comments",
+                                    description = "HATEOAS Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "User comments",
+                                    description = "HATEOAS Link",
+                                    schema = @Schema(type = "Link")
+                            )
+                    }
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -315,7 +350,19 @@ public class AssessmentController {
             @ApiResponse(
                     responseCode = "204",
                     description = "Comment deleted correctly",
-                    content = @Content
+                    content = @Content,
+                    headers = {
+                            @Header(
+                                    name = "Film comments",
+                                    description = "HATEOAS Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "User comments",
+                                    description = "HATEOAS Link",
+                                    schema = @Schema(type = "Link")
+                            )
+                    }
             ),
             @ApiResponse(
                     responseCode = "401",

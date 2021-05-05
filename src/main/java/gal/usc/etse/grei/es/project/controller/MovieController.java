@@ -9,6 +9,7 @@ import gal.usc.etse.grei.es.project.model.Film;
 import gal.usc.etse.grei.es.project.service.MovieService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -104,11 +105,48 @@ public class MovieController {
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
-                    description = "Movies details"
+                    description = "Movies details",
+                    headers = {
+                            @Header(
+                                    name = "Self movie page",
+                                    description = "HATEOAS Self Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "First movie page",
+                                    description = "HATEOAS First Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Last movie page",
+                                    description = "HATEOAS Last Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Next movie page",
+                                    description = "HATEOAS Next Link (if necessary)",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Previous movie page",
+                                    description = "HATEOAS Previous Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "One movie",
+                                    description = "HATEOAS One Link",
+                                    schema = @Schema(type = "Link")
+                            )
+                    }
             ),
             @ApiResponse(
                     responseCode = "403",
                     description = "Not enough privileges",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "No comments found",
                     content = @Content
             ),
             @ApiResponse(
@@ -244,12 +282,24 @@ public class MovieController {
             operationId = "getOneMovie",
             summary = "Get details of one movie",
             description = "Get all the details from one movie given by its id. To get them, " +
-                    "you must be authenticated."
+                    "you must be authenticated. Results are pageable."
     )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
-                    description = "The movie details"
+                    description = "The movie details",
+                    headers = {
+                            @Header(
+                                    name = "Self movie",
+                                    description = "HATEOAS Self Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "All movies",
+                                    description = "HATEOAS All Link",
+                                    schema = @Schema(type = "Link")
+                            )
+                    }
             ),
             @ApiResponse(
                     responseCode = "404",
@@ -329,7 +379,24 @@ public class MovieController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = Film.class)
-                    )
+                    ),
+                    headers = {
+                            @Header(
+                                    name = "Self movie",
+                                    description = "HATEOAS Self Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "All movies",
+                                    description = "HATEOAS All Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Created movie",
+                                    description = "Created movie location",
+                                    schema = @Schema(type = "Location")
+                            )
+                    }
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -415,7 +482,8 @@ public class MovieController {
     @Operation(
             operationId = "updateMovie",
             summary = "Update movie information",
-            description = "Update information of a movie given by its id. To be allowed to do this, "+
+            description = "Update information of a movie given by its id. Modifications will be specified en JsonPatch format. " +
+                    "To be allowed to do this, "+
                     "you must have admin permissions."
     )
     @ApiResponses({
@@ -425,7 +493,19 @@ public class MovieController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = Film.class)
-                    )
+                    ),
+                    headers = {
+                            @Header(
+                                    name = "Self movie",
+                                    description = "HATEOAS Self Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "All movies",
+                                    description = "HATEOAS All Link",
+                                    schema = @Schema(type = "Link")
+                            )
+                    }
             ),
             @ApiResponse(
                     responseCode = "401",
@@ -519,7 +599,14 @@ public class MovieController {
             @ApiResponse(
                     responseCode = "204",
                     description = "Deleted movie correctly",
-                    content = @Content
+                    content = @Content,
+                    headers = {
+                            @Header(
+                                    name = "All movies",
+                                    description = "HATEOAS All Link",
+                                    schema = @Schema(type = "Link")
+                            )
+                    }
             ),
             @ApiResponse(
                     responseCode = "401",
@@ -595,7 +682,34 @@ public class MovieController {
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
-                    description = "Get comments details"
+                    description = "Get comments details",
+                    headers = {
+                            @Header(
+                                    name = "Movie from comment",
+                                    description = "HATEOAS Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "First movie comments page",
+                                    description = "HATEOAS First Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Last movie comments page",
+                                    description = "HATEOAS Last Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Next movie comments page",
+                                    description = "HATEOAS Next Link (if necessary)",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Previous movie comments page",
+                                    description = "HATEOAS Previous Link",
+                                    schema = @Schema(type = "Link")
+                            )
+                    }
             ),
             @ApiResponse(
                     responseCode = "401",

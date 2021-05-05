@@ -1,13 +1,13 @@
 package gal.usc.etse.grei.es.project.controller;
 
 import gal.usc.etse.grei.es.project.errorManagement.ErrorObject;
-import gal.usc.etse.grei.es.project.model.Assessment;
 import gal.usc.etse.grei.es.project.model.Friendship;
 import gal.usc.etse.grei.es.project.model.User;
 import gal.usc.etse.grei.es.project.service.FriendshipService;
 import gal.usc.etse.grei.es.project.utilities.Constants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -90,7 +90,24 @@ public class FriendshipController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = Friendship.class)
-                    )
+                    ),
+                    headers = {
+                            @Header(
+                                    name = "Self friendship",
+                                    description = "HATEOAS Self Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "All friendships",
+                                    description = "HATEOAS All Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Created friendship",
+                                    description = "Created friendship location",
+                                    schema = @Schema(type = "Location")
+                            )
+                    }
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -168,6 +185,87 @@ public class FriendshipController {
     }
 
     /**
+     * Método: DELETE
+     * Url para llegar: /friendships/{id}
+     * Objetivo: borrar el amigo que se facilita por url, del usuario cuyo id también se facilita por url.
+     * Permisos: única y exclusivamente el propio usuario.
+     * Enlaces devueltos: a la lista de todos los amigos del usuario que hace el borrado.
+     *
+     * @param id El identificador del usuario del cual se quiere eliminar un amigo.
+     * @return Un estado noContent si se pudo hacer la eliminación, el error adecuado en caso contrario.
+     */
+    @DeleteMapping(
+            path = "{id}",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("@friendshipService.isInFriendship(principal, #id)")
+    @Operation(
+            operationId = "deleteFriendship",
+            summary = "Delete friendship by id",
+            description = "Delete friendship information using its id. To do this, you must be one of the members of " +
+                    "the requested friendship."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Friendship deleted",
+                    content = @Content,
+                    headers = {
+                            @Header(
+                                    name = "All friendships",
+                                    description = "HATEOAS All Link",
+                                    schema = @Schema(type = "Link")
+                            )
+                    }
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Bad token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Not enough privileges",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Friendship not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "419",
+                    description = "Token Expired",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorObject.class)
+                    )
+            )
+    })
+    ResponseEntity<Object> deleteFriend(
+            @Parameter(name = "id", description = "Friendship id", example = "6075b1f9866a2401c582f898")
+            @PathVariable("id") String id
+    ){
+        //Se intenta hacer el borrado:
+        friends.deleteFriend(id);
+        //Si termina el método, es que se ha borrado correctamente. Se prepara el enlace a la lista de todos los amigos
+        //del usuario.
+        Link all = linkTo(methodOn(UserController.class).getUserFriendships(0, 20, null,
+                SecurityContextHolder.getContext().getAuthentication().getName()))
+                .withRel(relationProvider.getCollectionResourceRelFor(Friendship.class));
+        //Si el método finaliza correctamente, se devuelve un noContent:
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.LINK, all.toString())
+                .build();
+    }
+
+    /**
      * Método: GET.
      * Url para llegar: /friendships/{id}
      * Objetivo: recuperar los datos de una amistad.
@@ -197,7 +295,29 @@ public class FriendshipController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = Friendship.class)
-                    )
+                    ),
+                    headers = {
+                            @Header(
+                                    name = "Self friendship",
+                                    description = "HATEOAS Self Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "All friendships",
+                                    description = "HATEOAS All Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "User",
+                                    description = "HATEOAS Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Friend",
+                                    description = "HATEOAS Link",
+                                    schema = @Schema(type = "Link")
+                            )
+                    }
             ),
             @ApiResponse(
                     responseCode = "401",
@@ -263,80 +383,6 @@ public class FriendshipController {
     }
 
     /**
-     * Método: DELETE
-     * Url para llegar: /friendships/{id}
-     * Objetivo: borrar el amigo que se facilita por url, del usuario cuyo id también se facilita por url.
-     * Permisos: única y exclusivamente el propio usuario.
-     * Enlaces devueltos: a la lista de todos los amigos del usuario que hace el borrado.
-     *
-     * @param id El identificador del usuario del cual se quiere eliminar un amigo.
-     * @return Un estado noContent si se pudo hacer la eliminación, el error adecuado en caso contrario.
-     */
-    @DeleteMapping(
-            path = "{id}",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    @PreAuthorize("@friendshipService.isInFriendship(principal, #id)")
-    @Operation(
-            operationId = "deleteFriendship",
-            summary = "Delete friendship by id",
-            description = "Delete friendship information using its id. To do this, you must be one of the members of " +
-                    "the requested friendship."
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "204",
-                    description = "Friendship deleted",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "Bad token",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorObject.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Not enough privileges",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Friendship not found",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorObject.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "419",
-                    description = "Token Expired",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorObject.class)
-                    )
-            )
-    })
-    ResponseEntity<Object> deleteFriend(
-            @Parameter(name = "id", description = "Friendship id", example = "6075b1f9866a2401c582f898")
-            @PathVariable("id") String id
-    ){
-        //Se intenta hacer el borrado:
-        friends.deleteFriend(id);
-        //Si termina el método, es que se ha borrado correctamente. Se prepara el enlace a la lista de todos los amigos
-        //del usuario.
-        Link all = linkTo(methodOn(UserController.class).getUserFriendships(0, 20, null,
-                SecurityContextHolder.getContext().getAuthentication().getName()))
-                .withRel(relationProvider.getCollectionResourceRelFor(Friendship.class));
-        //Si el método finaliza correctamente, se devuelve un noContent:
-        return ResponseEntity.noContent()
-                .header(HttpHeaders.LINK, all.toString())
-                .build();
-    }
-
-    /**
      * Método: PATCH
      * Url para llegar: /friendships/{id}
      * Objetivo: modificar la relación de amistad, de manera que se confirme la relación entre dos amigos.
@@ -356,7 +402,8 @@ public class FriendshipController {
             operationId = "updateFriendship",
             summary = "Update friendship to confirm it",
             description = "Update friendship information with the confirmation of this friendship by the user that received it " +
-                    "(the one who didn't created it), that will be the only allowed user to do this."
+                    "(the one who didn't created it), that will be the only allowed user to do this. The modification must " +
+                    "be specified in JsonPatch format."
     )
     @ApiResponses({
             @ApiResponse(
@@ -365,7 +412,29 @@ public class FriendshipController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = Friendship.class)
-                    )
+                    ),
+                    headers = {
+                            @Header(
+                                    name = "Self friendship",
+                                    description = "HATEOAS Self Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "All friendships",
+                                    description = "HATEOAS All Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "User",
+                                    description = "HATEOAS Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Friend",
+                                    description = "HATEOAS Link",
+                                    schema = @Schema(type = "Link")
+                            )
+                    }
             ),
             @ApiResponse(
                     responseCode = "400",

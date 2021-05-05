@@ -11,6 +11,7 @@ import gal.usc.etse.grei.es.project.model.User;
 import gal.usc.etse.grei.es.project.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -101,11 +102,23 @@ public class UserController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = User.class)
-                    )
+                    ),
+                    headers = {
+                            @Header(
+                                    name = "Self user",
+                                    description = "HATEOAS Self Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "All users",
+                                    description = "HATEOAS All Link",
+                                    schema = @Schema(type = "Link")
+                            )
+                    }
             ),
             @ApiResponse(
-                    responseCode = "404",
-                    description = "User not found",
+                    responseCode = "401",
+                    description = "Bad token",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorObject.class)
@@ -117,8 +130,8 @@ public class UserController {
                     content = @Content
             ),
             @ApiResponse(
-                    responseCode = "401",
-                    description = "Bad token",
+                    responseCode = "404",
+                    description = "User not found",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorObject.class)
@@ -133,7 +146,7 @@ public class UserController {
                     )
             )
     })
-    ResponseEntity<User> get(@Parameter(name = "id", example = "user@mail.com") @PathVariable("id") String id) {
+    ResponseEntity<User> get(@Parameter(name = "id", example = "test@test.com") @PathVariable("id") String id) {
         //Hacemos la consulta:
         Optional<User> result = users.get(id);
 
@@ -179,17 +192,44 @@ public class UserController {
             operationId = "getUsers",
             summary = "Get details from multiple users",
             description = "Get the details for some users, using different filters. To get them, " +
-                    "you must be authenticated."
+                    "you must be authenticated. Results are pageable."
     )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
-                    description = "Users details"
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Not enough privileges",
-                    content = @Content
+                    description = "Users details",
+                    headers = {
+                            @Header(
+                                    name = "Self user page",
+                                    description = "HATEOAS Self Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "First user page",
+                                    description = "HATEOAS First Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Last user page",
+                                    description = "HATEOAS Last Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Next user page",
+                                    description = "HATEOAS Next Link (if necessary)",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Previous user page",
+                                    description = "HATEOAS Previous Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "One user",
+                                    description = "HATEOAS One Link",
+                                    schema = @Schema(type = "Link")
+                            )
+                    }
             ),
             @ApiResponse(
                     responseCode = "401",
@@ -198,6 +238,16 @@ public class UserController {
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorObject.class)
                     )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Not enough privileges",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Results not found",
+                    content = @Content
             ),
             @ApiResponse(
                     responseCode = "419",
@@ -209,7 +259,7 @@ public class UserController {
             )
     })
     ResponseEntity<Page<User>> get(
-            @Parameter(name = "page", description = "Page number to get", example = "1")
+            @Parameter(name = "page", description = "Page number to get", example = "0")
             @RequestParam(name = "page", defaultValue = "0") int page,
             @Parameter(name = "size", description = "Size of the page", example = "15")
             @RequestParam(name = "size", defaultValue = "20") int size,
@@ -314,7 +364,24 @@ public class UserController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = User.class)
-                    )
+                    ),
+                    headers = {
+                            @Header(
+                                    name = "Self user",
+                                    description = "HATEOAS Self Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "All users",
+                                    description = "HATEOAS All Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Created user URI",
+                                    description = "Created user location",
+                                    schema = @Schema(type = "Location")
+                            )
+                    }
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -391,7 +458,15 @@ public class UserController {
     @ApiResponses({
             @ApiResponse(
                     responseCode = "204",
-                    description = "Correctly deleted user"
+                    description = "Correctly deleted user",
+                    content = @Content,
+                    headers = {
+                            @Header(
+                                    name = "All users",
+                                    description = "HATEOAS All Link",
+                                    schema = @Schema(type = "Link")
+                            )
+                    }
             ),
             @ApiResponse(
                     responseCode = "404",
@@ -471,7 +546,19 @@ public class UserController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = User.class)
-                    )
+                    ),
+                    headers = {
+                            @Header(
+                                    name = "Self user",
+                                    description = "HATEOAS Self Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "All users",
+                                    description = "HATEOAS All Link",
+                                    schema = @Schema(type = "Link")
+                            )
+                    }
             ),
             @ApiResponse(
                     responseCode = "422",
@@ -563,12 +650,39 @@ public class UserController {
             operationId = "getUserFriendships",
             summary = "Get details of all user friendships",
             description = "Get details of all friendships for a given user. To see them, you " +
-                    "must be the requested user."
+                    "must be the requested user. Results are pageable."
     )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
-                    description = "User friendships correctly given"
+                    description = "User friendships correctly given",
+                    headers = {
+                            @Header(
+                                    name = "Self user friendships page",
+                                    description = "HATEOAS Self Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "First user friendships page",
+                                    description = "HATEOAS First Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Last user friendships page",
+                                    description = "HATEOAS Last Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Next user friendships page",
+                                    description = "HATEOAS Next Link (if necessary)",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Previous user friendships page",
+                                    description = "HATEOAS Previous Link",
+                                    schema = @Schema(type = "Link")
+                            )
+                    }
             ),
             @ApiResponse(
                     responseCode = "403",
@@ -593,13 +707,13 @@ public class UserController {
             )
     })
     ResponseEntity<Page<Friendship>> getUserFriendships(
-            @Parameter(name = "page", description = "Page number to get", example = "1")
+            @Parameter(name = "page", description = "Page number to get", example = "0")
             @RequestParam(name = "page", defaultValue = "0") int page,
             @Parameter(name = "size", description = "Size of the page", example = "15")
             @RequestParam(name = "size", defaultValue = "20") int size,
             @Parameter(name = "sort", description = "Sort criteria", example = "+since")
             @RequestParam(name = "sort", defaultValue = "") List<String> sort,
-            @Parameter(name = "email", description = "User email", example = "test@test.com")
+            @Parameter(name = "id", description = "User email", example = "test@test.com")
             @PathVariable("id") String id
     ) {
         //Recuperamos criterios de ordenación:
@@ -683,12 +797,39 @@ public class UserController {
             operationId = "getUserComments",
             summary = "Get all coments from an user",
             description = "Get details from all the coments for a given user. To see them, you must have admin " +
-                    "permissions, be the requested user or be one of his friends."
+                    "permissions, be the requested user or be one of his friends. Results are pageable."
     )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
-                    description = "User comments correctly given"
+                    description = "User comments correctly given",
+                    headers = {
+                            @Header(
+                                    name = "User",
+                                    description = "HATEOAS Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "First user comments page",
+                                    description = "HATEOAS First Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Last user comments page",
+                                    description = "HATEOAS Last Link",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Next user comments page",
+                                    description = "HATEOAS Next Link (if necessary)",
+                                    schema = @Schema(type = "Link")
+                            ),
+                            @Header(
+                                    name = "Previous user comments page",
+                                    description = "HATEOAS Previous Link",
+                                    schema = @Schema(type = "Link")
+                            )
+                    }
             ),
             @ApiResponse(
                     responseCode = "403",
@@ -714,13 +855,13 @@ public class UserController {
     })
     @PreAuthorize("hasRole('ADMIN') or #userId == principal or @friendshipService.areFriends(#userId, principal)")
     ResponseEntity<Page<Assessment>> getUserComments(
-            @Parameter(name = "page", description = "Page number to get", example = "1")
+            @Parameter(name = "page", description = "Page number to get", example = "0")
             @RequestParam(name = "page", defaultValue = "0") int page,
             @Parameter(name = "size", description = "Size of the page", example = "15")
             @RequestParam(name = "size", defaultValue = "20") int size,
             @Parameter(name = "sort", description = "Sort criteria", example = "-comment")
             @RequestParam(name = "sort", defaultValue = "") List<String> sort,
-            @Parameter(name = "email", description = "User email", example = "test@test.com")
+            @Parameter(name = "id", description = "User email", example = "test@test.com")
             @PathVariable("id") String userId
     ) {
         //Se recuperan los criterios de ordenación:
