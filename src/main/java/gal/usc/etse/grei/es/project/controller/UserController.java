@@ -690,6 +690,11 @@ public class UserController {
                     content = @Content
             ),
             @ApiResponse(
+                    responseCode = "404",
+                    description = "No friendships found",
+                    content = @Content
+            ),
+            @ApiResponse(
                     responseCode = "401",
                     description = "Bad token",
                     content = @Content(
@@ -834,6 +839,11 @@ public class UserController {
             @ApiResponse(
                     responseCode = "403",
                     description = "Not enough privileges",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "No comments found",
                     content = @Content
             ),
             @ApiResponse(

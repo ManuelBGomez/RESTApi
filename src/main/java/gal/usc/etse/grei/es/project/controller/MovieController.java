@@ -146,7 +146,7 @@ public class MovieController {
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "No comments found",
+                    description = "No movies found",
                     content = @Content
             ),
             @ApiResponse(
