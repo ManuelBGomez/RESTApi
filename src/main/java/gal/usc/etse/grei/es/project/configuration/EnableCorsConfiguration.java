@@ -20,6 +20,6 @@ public class EnableCorsConfiguration extends WebMvcConfigurerAdapter {
      */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**").allowedHeaders("*").exposedHeaders("*");
+        registry.addMapping("/**").allowedHeaders("*").exposedHeaders("*").allowedMethods("*");
     }
 }
